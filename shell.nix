@@ -17,8 +17,8 @@ mkShell {
          src = fetchFromGitHub {
            repo = "agda-categories";
            owner = "agda";
-           rev = "944a487b92ab3a9d3b3ee54d209cd7ea95dc58ed";
-           hash = "sha256-G5QgEMj6U+5s3o7HUfORn+Y3gQA9KvpUuAvHAXn7TKk=";
+           rev = "4aea83ae7128e0aa761d46a092050d0355f545af";
+           hash = "sha256-/h0KeRkEc1bW//P/I4p61FGFIR03W7dC//WmEDFruk0=";
          };
 
         # without this nix might use a wrong version of the stdlib to try and typecheck agda-categories
