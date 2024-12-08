@@ -2,6 +2,7 @@
 
 open import Data.Nat using (ℕ)
 open import Data.Vec as V using (Vec ; lookup ; foldr ; [] ; _∷_ ; updateAt; removeAt)
+import Data.Vec.Properties as VP
 open import Data.Fin.Base using (fromℕ; Fin)
 
 import Relation.Binary.PropositionalEquality as Eq
@@ -17,12 +18,14 @@ open import Categories.Category.Cocartesian
 open import Categories.Category.BinaryProducts 
 open import Categories.Category.Core
 open import Categories.Functor.Algebra
+open import Categories.FreeObjects.Free
+open import Categories.Category.Construction.F-Algebras
 
 open import Data.Sum
 import Data.List as List
 open List using ([]; _∷_; List)
 open import Data.Unit.Polymorphic using (tt)
--- open import Data.Product
+open import Data.Product using (Σ; _,_)
 
 open import Level using (Level)
 
@@ -38,7 +41,6 @@ module Example.Signature (o : Level) where
   open BinaryProducts products renaming (unique to ⟨⟩-unique)
   open Terminal terminal
 
-  -- open Cartesian Agda-Cartesian
   record Signature : Set where
     field
       -- operations
@@ -47,69 +49,49 @@ module Example.Signature (o : Level) where
       -- arities
       arts : Vec ℕ ops 
   open Signature
-  -- PROBLEM:
-  -- can't convert signatures to lists or work with signatures directly, record definition makes induction too hard.
-
-  -- signatureToList : Signature → List ℕ
-  -- signatureToList record { ops = zero ; arts = arts } = []
-  -- signatureToList record { ops = suc n ; arts = arts } = (lookup arts (fromℕ n)) ∷ signatureToList (record { ops = n ; arts = removeAt arts (fromℕ n) })
 
   open ℕ
 
-  product-Functor : ℕ → Endofunctor (Agda o)
-  product-Functor zero = record
-    { F₀           = λ _ → ⊤
-    ; F₁           = λ _ _ → tt
-    ; identity     = λ _ → ≡-refl
-    ; homomorphism = λ _ → ≡-refl
-    ; F-resp-≈     = λ _ _ → ≡-refl
-    }
-  product-Functor (suc n) = record
-    { F₀           = λ X → X × Functor.₀ (product-Functor n) X
-    ; F₁           = λ {A} {B} f → f ⁂ Functor.₁ (product-Functor n) f
-    ; identity     = λ {X} → ⁂-cong₂ refl (Functor.identity (product-Functor n)) ○ ⟨⟩-unique refl refl
-    ; homomorphism = λ {X} {Y} {Z} {f} {g} → begin 
-    (g ∘ f) ⁂ Functor.₁ (product-Functor n) (g ∘ f)                               ≈⟨ ⁂-cong₂ refl (Functor.homomorphism (product-Functor n)) ⟩
-    (g ∘ f) ⁂ Functor.₁ (product-Functor n) g ∘ Functor.₁ (product-Functor n) f   ≈˘⟨ ⁂∘⁂ {f = g} {g = Functor.₁ (product-Functor n) g} {f′ = f} {g′ = Functor.₁ (product-Functor n) f} ⟩
-    (g ⁂ Functor.₁ (product-Functor n) g) ∘ (f ⁂ Functor.₁ (product-Functor n) f) ∎
-    ; F-resp-≈     = λ {A} {B} {f} {g} f≈g → ⁂-cong₂ f≈g (Functor.F-resp-≈ (product-Functor n) f≈g)
-    }
+  Sig-Functor : Signature → Endofunctor (Agda o)
+  Sig-Functor record { ops = ops ; arts = arts } .Functor.F₀ X                                                                                  = Σ (Fin ops) (λ op → Vec X (lookup arts op))
+  Sig-Functor record { ops = ops ; arts = arts } .Functor.F₁ f (op , args)                                                                      = op , V.map f args
+  Sig-Functor record { ops = ops ; arts = arts } .Functor.identity {A} (op , args) rewrite VP.map-id args                                       = ≡-refl
+  Sig-Functor record { ops = ops ; arts = arts } .Functor.homomorphism {f = f} {g = g} (op , args) rewrite VP.map-∘ g f args                    = ≡-refl
+  Sig-Functor record { ops = ops ; arts = arts } .Functor.F-resp-≈ {f = f} {g = g} f≈g (op , args) rewrite VP.map-cong {f = f} {g = g} f≈g args = ≡-refl
 
-  Σ-Functor : List ℕ → Endofunctor (Agda o)
-  Σ-Functor [] = record
-    { F₀           = λ _ → ⊥
-    ; F₁           = λ _ ()
-    ; identity     = λ ()
-    ; homomorphism = λ ()
-    ; F-resp-≈     = λ _ ()
-    }
-  Σ-Functor (n ∷ ns) = record
-    { F₀           = λ X → Functor.₀ (product-Functor n) X + Functor.₀ (Σ-Functor ns) X
-    ; F₁           = λ {A} {B} f → Functor.₁ (product-Functor n) f +₁ Functor.₁ (Σ-Functor ns) f
-    ; identity     = λ {A} → +₁-cong₂ (Functor.identity (product-Functor n)) (Functor.identity (Σ-Functor ns)) ○ []-unique refl refl
-    ; homomorphism = λ {X} {Y} {Z} {f} {g} → +₁-cong₂ (Functor.homomorphism (product-Functor n)) (Functor.homomorphism (Σ-Functor ns)) ○ sym +₁∘+₁
-    ; F-resp-≈     = λ {A} {B} {f} {g} f≈g → +₁-cong₂ (Functor.F-resp-≈ (product-Functor n) f≈g) (Functor.F-resp-≈ (Σ-Functor ns) f≈g)
-    }
+  Σₘₒₙ : Signature
+  Σₘₒₙ = record { ops = 2 ; arts = 0 ∷ 2 ∷ [] }
 
-  Σₘₒₙ : List ℕ
-  Σₘₒₙ = 0 ∷ 2 ∷ []
-
-  data _*_ (Σ : List ℕ) (X : Set o) : Set o where
+  -- Terms with variables
+  data _*_ (Σ : Signature) (X : Set o) : Set o where
     Var : X → Σ * X
-    App : (n : Fin (List.length Σ)) → Vec (Σ * X) (List.lookup Σ n) → Σ * X
+    App : (f : Fin(ops Σ)) → Vec (Σ * X) (lookup (arts Σ) f)  → Σ * X
 
-  Mon-Algebra : (V : Set o) → F-Algebra (Σ-Functor Σₘₒₙ)
-  Mon-Algebra V = record 
-    { A = Σₘₒₙ * V 
-    ; α = λ { (inj₁ a) → {!  App 0 a !} ; (inj₂ b) → {!   !} } 
-    }
+  Mon-Algebra : (V : Set o) → F-Algebra (Sig-Functor Σₘₒₙ)
+  Mon-Algebra V .F-Algebra.A = Σₘₒₙ * V 
+  Mon-Algebra V .F-Algebra.α (op , args) = App op args
 
-  Σ-Algebra : (V : Set o) → (Σ : List ℕ) → F-Algebra (Σ-Functor Σ)
-  Σ-Algebra V [] = record 
-    { A = [] * V
-    ; α = λ ()
-    } 
-  Σ-Algebra V Σ@(n ∷ ns) = record 
+  Σ-Algebra : (V : Set o) → (Σ : Signature) → F-Algebra (Sig-Functor Σ)
+  Σ-Algebra V Σ@record { ops = ops ; arts = arts } = record 
     { A = Σ * V 
-    ; α = λ x → {!   !}
+    ; α = λ (op , args) → App op args 
     }
+
+  AlgebraForgetfulF : ∀ (F : Endofunctor (Agda o)) → Functor (F-Algebras F) (Agda o)
+  AlgebraForgetfulF F = record
+    { F₀ = λ A → F-Algebra.A A
+    ; F₁ = λ f → F-Algebra-Morphism.f f
+    ; identity = λ _ → ≡-refl
+    ; homomorphism = λ _ → ≡-refl
+    ; F-resp-≈ = λ eq → eq
+    }
+
+
+  Σ-free : ∀ (Σ : Signature) (V : Set o) → FreeObject (AlgebraForgetfulF (Sig-Functor Σ)) V
+  Σ-free Σ V .FreeObject.FX = Σ-Algebra V Σ
+  Σ-free Σ V .FreeObject.η = Var
+  (Σ-free Σ V FreeObject.*) {A} f .F-Algebra-Morphism.f (Var v) = f v
+  (Σ-free Σ V FreeObject.*) {A} f .F-Algebra-Morphism.f (App op args) = F-Algebra.α A (op , (V.map {! (Σ-free Σ V FreeObject.*) {A} f .F-Algebra-Morphism.f  !} args))
+  Σ-free Σ V .FreeObject._* {A} f .F-Algebra-Morphism.commutes = {!   !}
+  Σ-free Σ V .FreeObject.*-lift = {!   !}
+  Σ-free Σ V .FreeObject.*-uniq = {!   !}
