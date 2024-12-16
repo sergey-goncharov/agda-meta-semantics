@@ -86,8 +86,8 @@ module Example.Signature (o : Level) where
 
   AlgebraForgetfulF : ∀ (F : Endofunctor (Agda o)) → Functor (F-Algebras F) (Agda o)
   AlgebraForgetfulF F = record
-    { F₀ = λ A → F-Algebra.A A
-    ; F₁ = λ f → F-Algebra-Morphism.f f
+    { F₀ = F-Algebra.A
+    ; F₁ = F-Algebra-Morphism.f
     ; identity = λ _ → ≡-refl
     ; homomorphism = λ _ → ≡-refl
     ; F-resp-≈ = λ eq → eq
