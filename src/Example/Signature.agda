@@ -1,8 +1,10 @@
-{-# OPTIONS --allow-unsolved-metas --without-K #-}
+{-# OPTIONS --safe --without-K #-}
 
 open import Data.Nat using (ℕ)
 open import Data.Vec as V using (Vec ; lookup ; foldr ; [] ; _∷_ ; updateAt; removeAt)
 import Data.Vec.Properties as VP
+open import Data.Vec.Relation.Binary.Equality.Propositional using (≋⇒≡; ≡⇒≋)
+open import Data.Vec.Relation.Binary.Pointwise.Inductive using (_∷_)
 open import Data.Fin.Base using (fromℕ; Fin)
 
 import Relation.Binary.PropositionalEquality as Eq
@@ -21,11 +23,14 @@ open import Categories.Functor.Algebra
 open import Categories.FreeObjects.Free
 open import Categories.Category.Construction.F-Algebras
 
+open F-Algebra-Morphism renaming (f to ⟪_⟫)
+
 open import Data.Sum
 import Data.List as List
 open List using ([]; _∷_; List)
 open import Data.Unit.Polymorphic using (tt)
 open import Data.Product using (Σ; _,_)
+open import Data.Product.Properties using (Σ-≡,≡→≡)
 
 open import Level using (Level)
 
@@ -47,7 +52,7 @@ module Example.Signature (o : Level) where
       ops : ℕ
 
       -- arities
-      arts : Vec ℕ ops 
+      arts : Vec ℕ ops
   open Signature
 
   open ℕ
@@ -65,7 +70,9 @@ module Example.Signature (o : Level) where
   -- Terms with variables
   data _*_ (Σ : Signature) (X : Set o) : Set o where
     Var : X → Σ * X
-    App : (f : Fin(ops Σ)) → Vec (Σ * X) (lookup (arts Σ) f)  → Σ * X
+    App : (f : Fin(ops Σ)) → Vec (Σ * X) (lookup (arts Σ) f) → Σ * X
+
+  data _<_ {Σ : Signature} {X : Set o} : Σ * X → Σ * X → Set o where
 
   Mon-Algebra : (V : Set o) → F-Algebra (Sig-Functor Σₘₒₙ)
   Mon-Algebra V .F-Algebra.A = Σₘₒₙ * V 
@@ -86,12 +93,30 @@ module Example.Signature (o : Level) where
     ; F-resp-≈ = λ eq → eq
     }
 
+  module _ (Σ : Signature) (V : Set o) where
+    private
+      lift : ∀ (A : F-Algebra (Sig-Functor Σ)) (f : V → F-Algebra.A A) → Σ * V → F-Algebra.A A
+      lift-vec : ∀ (A : F-Algebra (Sig-Functor Σ)) (f : V → F-Algebra.A A) → (n : ℕ) → (args : Vec (Σ * V) n) → Vec (F-Algebra.A A) n
+      lift A f (Var v) = f v
+      lift A f (App op args) = F-Algebra.α A (op , lift-vec A f (lookup (arts Σ) op) args)
+      lift-vec A f zero [] = []
+      lift-vec A f (suc n) (arg ∷ args) = lift A f arg ∷ lift-vec A f n args
 
-  Σ-free : ∀ (Σ : Signature) (V : Set o) → FreeObject (AlgebraForgetfulF (Sig-Functor Σ)) V
-  Σ-free Σ V .FreeObject.FX = Σ-Algebra V Σ
-  Σ-free Σ V .FreeObject.η = Var
-  (Σ-free Σ V FreeObject.*) {A} f .F-Algebra-Morphism.f (Var v) = f v
-  (Σ-free Σ V FreeObject.*) {A} f .F-Algebra-Morphism.f (App op args) = F-Algebra.α A (op , (V.map {! (Σ-free Σ V FreeObject.*) {A} f .F-Algebra-Morphism.f  !} args))
-  Σ-free Σ V .FreeObject._* {A} f .F-Algebra-Morphism.commutes = {!   !}
-  Σ-free Σ V .FreeObject.*-lift = {!   !}
-  Σ-free Σ V .FreeObject.*-uniq = {!   !}
+    Σ-free : FreeObject (AlgebraForgetfulF (Sig-Functor Σ)) V
+    Σ-free .FreeObject.FX = Σ-Algebra V Σ
+    Σ-free .FreeObject.η = Var
+    (Σ-free FreeObject.*) {A} f .F-Algebra-Morphism.f = lift A f
+    Σ-free .FreeObject._* {A} f .F-Algebra-Morphism.commutes (op , args) = Eq.cong (F-Algebra.α A) (Σ-≡,≡→≡ (≡-refl , lift-vec-map (lookup (arts Σ) op) args))
+      where
+        lift-vec-map : ∀ (n : ℕ) (args : Vec (Σ * V) n) → lift-vec A f n args ≡ V.map (lift A f) args
+        lift-vec-map zero [] = ≡-refl
+        lift-vec-map (suc n) (arg ∷ args) = ≋⇒≡ (≡-refl ∷ ≡⇒≋ (lift-vec-map n args))
+    Σ-free .FreeObject.*-lift f x = ≡-refl
+    Σ-free .FreeObject.*-uniq {A} f g eq = uniq
+      where
+        uniq : ∀ (x : Σ * V) → ⟪ g ⟫ x ≡ ⟪ FreeObject._* Σ-free f ⟫ x
+        uniq-vec : (n : ℕ) → (args : Vec (Σ * V) n) → V.map ⟪ g ⟫ args ≡ lift-vec A f n args
+        uniq (Var v) = eq v
+        uniq (App op args) rewrite F-Algebra-Morphism.commutes g (op , args) = Eq.cong (F-Algebra.α A) (Σ-≡,≡→≡ (≡-refl , uniq-vec (lookup (arts Σ) op) args))
+        uniq-vec zero [] = ≡-refl
+        uniq-vec (suc n) (arg ∷ args) = ≋⇒≡ ((uniq arg) ∷ ≡⇒≋ (uniq-vec n args))
