@@ -1,7 +1,7 @@
 {-# OPTIONS --safe --without-K #-}
 
 open import Data.Nat using (ℕ)
-open import Data.Vec as V using (Vec ; lookup ; foldr ; [] ; _∷_ ; updateAt; removeAt)
+open import Data.Vec as V using (Vec ; foldr ; [] ; _∷_ ; updateAt; removeAt) renaming (lookup to _!!_)
 import Data.Vec.Properties as VP
 open import Data.Vec.Relation.Binary.Equality.Propositional using (≋⇒≡; ≡⇒≋)
 open import Data.Vec.Relation.Binary.Pointwise.Inductive using (_∷_)
@@ -58,7 +58,7 @@ module Example.Signature (o : Level) where
   open ℕ
 
   Sig-Functor : Signature → Endofunctor (Agda o)
-  Sig-Functor record { ops = ops ; arts = arts } .Functor.F₀ X                                                                                  = Σ (Fin ops) (λ op → Vec X (lookup arts op))
+  Sig-Functor record { ops = ops ; arts = arts } .Functor.F₀ X                                                                                  = Σ (Fin ops) (λ op → Vec X (arts !! op))
   Sig-Functor record { ops = ops ; arts = arts } .Functor.F₁ f (op , args)                                                                      = op , V.map f args
   Sig-Functor record { ops = ops ; arts = arts } .Functor.identity {A} (op , args) rewrite VP.map-id args                                       = ≡-refl
   Sig-Functor record { ops = ops ; arts = arts } .Functor.homomorphism {f = f} {g = g} (op , args) rewrite VP.map-∘ g f args                    = ≡-refl
@@ -70,7 +70,7 @@ module Example.Signature (o : Level) where
   -- Terms with variables
   data _*_ (Σ : Signature) (X : Set o) : Set o where
     Var : X → Σ * X
-    App : (f : Fin(ops Σ)) → Vec (Σ * X) (lookup (arts Σ) f) → Σ * X
+    App : (f : Fin(ops Σ)) → Vec (Σ * X) (arts Σ !! f) → Σ * X
 
   data _<_ {Σ : Signature} {X : Set o} : Σ * X → Σ * X → Set o where
 
@@ -86,8 +86,8 @@ module Example.Signature (o : Level) where
 
   AlgebraForgetfulF : ∀ (F : Endofunctor (Agda o)) → Functor (F-Algebras F) (Agda o)
   AlgebraForgetfulF F = record
-    { F₀ = λ A → F-Algebra.A A
-    ; F₁ = λ f → F-Algebra-Morphism.f f
+    { F₀ = F-Algebra.A
+    ; F₁ = F-Algebra-Morphism.f
     ; identity = λ _ → ≡-refl
     ; homomorphism = λ _ → ≡-refl
     ; F-resp-≈ = λ eq → eq
@@ -98,7 +98,7 @@ module Example.Signature (o : Level) where
       lift : ∀ (A : F-Algebra (Sig-Functor Σ)) (f : V → F-Algebra.A A) → Σ * V → F-Algebra.A A
       lift-vec : ∀ (A : F-Algebra (Sig-Functor Σ)) (f : V → F-Algebra.A A) → (n : ℕ) → (args : Vec (Σ * V) n) → Vec (F-Algebra.A A) n
       lift A f (Var v) = f v
-      lift A f (App op args) = F-Algebra.α A (op , lift-vec A f (lookup (arts Σ) op) args)
+      lift A f (App op args) = F-Algebra.α A (op , lift-vec A f (arts Σ !! op) args)
       lift-vec A f zero [] = []
       lift-vec A f (suc n) (arg ∷ args) = lift A f arg ∷ lift-vec A f n args
 
@@ -106,7 +106,7 @@ module Example.Signature (o : Level) where
     Σ-free .FreeObject.FX = Σ-Algebra V Σ
     Σ-free .FreeObject.η = Var
     (Σ-free FreeObject.*) {A} f .F-Algebra-Morphism.f = lift A f
-    Σ-free .FreeObject._* {A} f .F-Algebra-Morphism.commutes (op , args) = Eq.cong (F-Algebra.α A) (Σ-≡,≡→≡ (≡-refl , lift-vec-map (lookup (arts Σ) op) args))
+    Σ-free .FreeObject._* {A} f .F-Algebra-Morphism.commutes (op , args) = Eq.cong (F-Algebra.α A) (Σ-≡,≡→≡ (≡-refl , lift-vec-map (arts Σ !! op) args))
       where
         lift-vec-map : ∀ (n : ℕ) (args : Vec (Σ * V) n) → lift-vec A f n args ≡ V.map (lift A f) args
         lift-vec-map zero [] = ≡-refl
@@ -117,6 +117,6 @@ module Example.Signature (o : Level) where
         uniq : ∀ (x : Σ * V) → ⟪ g ⟫ x ≡ ⟪ FreeObject._* Σ-free f ⟫ x
         uniq-vec : (n : ℕ) → (args : Vec (Σ * V) n) → V.map ⟪ g ⟫ args ≡ lift-vec A f n args
         uniq (Var v) = eq v
-        uniq (App op args) rewrite F-Algebra-Morphism.commutes g (op , args) = Eq.cong (F-Algebra.α A) (Σ-≡,≡→≡ (≡-refl , uniq-vec (lookup (arts Σ) op) args))
+        uniq (App op args) rewrite F-Algebra-Morphism.commutes g (op , args) = Eq.cong (F-Algebra.α A) (Σ-≡,≡→≡ (≡-refl , uniq-vec (arts Σ !! op) args))
         uniq-vec zero [] = ≡-refl
         uniq-vec (suc n) (arg ∷ args) = ≋⇒≡ ((uniq arg) ∷ ≡⇒≋ (uniq-vec n args))
