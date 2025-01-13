@@ -55,7 +55,6 @@ module HOGSOS {o ℓ e} (C : Category o ℓ e) (cartesian : Cartesian C) (cocart
         natural : ∀ {X} {Y} {Y'} (f : Y ⇒ Y') → B.₁ (id , ⟪ Σ*.₁ (id +₁ f)⟫) ∘ ρ X Y ≈ ρ X Y' ∘ Σ.₁ (id ⁂ B.₁ (id , f))
         dinatural : ∀ {X} {Y} {X'} (f : X ⇒ X') → B.₁ (id , ⟪ Σ*.₁ (f +₁ id) ⟫) ∘ ρ X Y ∘ Σ.₁ (id ⁂ B.₁ (f , id)) ≈ B.₁ (f , ⟪ Σ*.₁ (id +₁ id) ⟫) ∘ ρ X' Y ∘ Σ.₁ (f ⁂ B.₁ (id , id))
 
-    -- TODO figure out if â can be derived from assumptions, then we could rename `club` to `_♣`
     module Clubsuit (law : Law) (ini : Initial (F-Algebras Σ)) where
       open Initial ini renaming (⊥ to μΣ)
       open F-Algebra μΣ using () renaming (α to ι)
