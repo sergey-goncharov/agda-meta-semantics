@@ -52,19 +52,23 @@ module HOGSOS {o ℓ e} (C : Category o ℓ e) (cartesian : Cartesian C) (cocart
     record Law : Set (o ⊔ ℓ ⊔ e) where
       field
         ρ : ∀ X Y → Σ.F₀ (X × B.F₀ (X , Y)) ⇒ B.F₀ (X , ⟦ Σ*.F₀ (X + Y) ⟧)
-        natural : ∀ {X} {Y} {Y'} (f : Y ⇒ Y') → B.₁ (id , (⟪ Σ*.₁ (id +₁ f)⟫)) ∘ ρ X Y ≈ ρ X Y' ∘ Σ.₁ (id ⁂ (B.₁ (id , f)))
+        natural : ∀ {X} {Y} {Y'} (f : Y ⇒ Y') → B.₁ (id , ⟪ Σ*.₁ (id +₁ f)⟫) ∘ ρ X Y ≈ ρ X Y' ∘ Σ.₁ (id ⁂ B.₁ (id , f))
         dinatural : ∀ {X} {Y} {X'} (f : X ⇒ X') → B.₁ (id , ⟪ Σ*.₁ (f +₁ id) ⟫) ∘ ρ X Y ∘ Σ.₁ (id ⁂ B.₁ (f , id)) ≈ B.₁ (f , ⟪ Σ*.₁ (id +₁ id) ⟫) ∘ ρ X' Y ∘ Σ.₁ (f ⁂ B.₁ (id , id))
 
     -- TODO figure out if â can be derived from assumptions, then we could rename `club` to `_♣`
-    module _ (law : Law) (ini : Initial (F-Algebras Σ)) (A : F-Algebra Σ) (â : ⟦ Σ*.₀ ⟦ A ⟧ ⟧ ⇒ ⟦ A ⟧) where
+    module _ (law : Law) (ini : Initial (F-Algebras Σ)) (A : F-Algebra Σ) where
       open Initial ini renaming (⊥ to μΣ)
       open F-Algebra μΣ using () renaming (α to ι)
       open F-Algebra A using () renaming (α to a)
       open Law law
+      
       ∇ : ∀ {A} → A + A ⇒ A
       ∇ {A} = [ id , id ]
 
       private
+        â : ⟦ Σ*.₀ ⟦ A ⟧ ⟧ ⇒ ⟦ A ⟧
+        â = FreeObject.*-lift {!freeAlgebras ⟦ A ⟧!} {!!}
+
         club'-alg : F-Algebra Σ
         club'-alg = record { A = ⟦ A ⟧ × B.₀ (⟦ A ⟧ , ⟦ A ⟧) ; α = (id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩ }
 
