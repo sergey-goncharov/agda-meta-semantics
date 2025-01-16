@@ -1,4 +1,4 @@
-{-# OPTIONS --allow-unsolved-metas --without-K #-}
+{-# OPTIONS --safe --without-K #-}
 
 open import Level
 open import Data.Product using (_,_)
@@ -41,7 +41,7 @@ module HOGSOS {o ℓ e} (C : Category o ℓ e) (cartesian : Cartesian C) (cocart
     ; F-resp-≈ = λ eq → eq
     }
 
-  module _ {freeAlgebras : ∀ X → FreeObject {C = C} {D = F-Algebras Σ} algebraForgetfulF X} where
+  module Laws (freeAlgebras : ∀ X → FreeObject {C = C} {D = F-Algebras Σ} algebraForgetfulF X) where
     Σ* : Functor C (F-Algebras Σ)
     Σ* = FO⇒Functor algebraForgetfulF freeAlgebras
     module Σ* = Functor Σ*
