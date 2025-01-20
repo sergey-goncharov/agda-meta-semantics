@@ -1,6 +1,6 @@
 {-# OPTIONS --allow-unsolved-metas --without-K #-}
 
-open import Level
+open import Level renaming (suc to ℓ-suc; zero to ℓ-zero)
 
 -- The category of agda types and terminating functions.
 open import Categories.Category.Instance.Sets renaming (Sets to Agda)
@@ -10,6 +10,8 @@ open import Categories.Functor
 open import Categories.Functor.Bifunctor
 open import Categories.Category
 open import Data.Product using (_,_)
+open import Data.Fin.Base
+
 
 open import Categories.Category.Construction.F-Algebras
 open import Categories.FreeObjects.Free
@@ -30,6 +32,7 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   open Equiv
   open import Example.Signature o
 
+  -- t , s ∷= S | K | I | S'(t) | K'(t) | S''(t,s) | app(t,s)
   xCL : Signature
   xCL = record { ops = 7 ; arts = 0 ∷ 0 ∷ 0 ∷ 1 ∷ 1 ∷ 2 ∷ 2 ∷ [] }
 
@@ -59,12 +62,34 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
 
   open Laws freeAlgebras
 
+  -- helpers
+  S : Fin 7
+  K : Fin 7
+  I : Fin 7
+  S' : Fin 7
+  K' : Fin 7
+  S'' : Fin 7
+  app : Fin 7
+  S = zero
+  K = suc zero
+  I = suc (suc zero)
+  S' = suc (suc (suc zero))
+  K' = suc (suc (suc (suc zero)))
+  S'' = suc (suc (suc (suc (suc zero))))
+  app = suc (suc (suc (suc (suc (suc zero)))))
+
   law : Law
-  law = record 
-    { ρ = {!   !} 
-    ; natural = {!   !} 
-    ; dinatural = {!   !} 
-    }
+  law .Law.ρ X Y (zero , [])                                                             = inj₂ (λ x → App S' (Var (inj₁ x) ∷ []))
+  law .Law.ρ X Y (suc zero , [])                                                         = inj₂ (λ x → App K' (Var (inj₁ x) ∷ []))
+  law .Law.ρ X Y (suc (suc zero) , [])                                                   = inj₂ (λ x → Var (inj₁ x))
+  law .Law.ρ X Y (suc (suc (suc zero)) , (x , _) ∷ [])                                   = inj₂ (λ x' → App S'' (Var (inj₁ x) ∷ Var (inj₁ x') ∷ []))
+  law .Law.ρ X Y (suc (suc (suc (suc zero))) , (x , _) ∷ [])                             = inj₂ (λ _ → Var (inj₁ x))
+  law .Law.ρ X Y (suc (suc (suc (suc (suc zero)))) , (x , _) ∷ (x' , _) ∷ [])            = inj₂ (λ x'' → App app (App app (Var (inj₁ x) ∷ Var (inj₁ x'') ∷ []) ∷ App app (Var (inj₁ x') ∷ Var (inj₁ x'') ∷ []) ∷ []))
+  law .Law.ρ X Y (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₁ y) ∷ (x' , _) ∷ []) = inj₁ (App app (Var (inj₂ y) ∷ Var (inj₁ x') ∷ []))
+  law .Law.ρ X Y (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₂ f) ∷ (x' , _) ∷ []) = inj₁ (Var (inj₂ (f x')))
+  
+  law .Law.natural = {!   !}
+  law .Law.dinatural = {!   !}
 
   ini : Initial (F-Algebras Σ)
   ini = {!   !}
