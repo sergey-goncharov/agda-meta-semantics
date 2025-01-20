@@ -11,6 +11,7 @@ open import Categories.Functor.Bifunctor
 open import Categories.Category
 open import Data.Product using (_,_)
 open import Data.Fin.Base
+open import Categories.Functor.Algebra
 
 
 open import Categories.Category.Construction.F-Algebras
@@ -62,34 +63,82 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
 
   open Laws freeAlgebras
 
-  -- helpers
-  S : Fin 7
-  K : Fin 7
-  I : Fin 7
-  S' : Fin 7
-  K' : Fin 7
-  S'' : Fin 7
-  app : Fin 7
-  S = zero
-  K = suc zero
-  I = suc (suc zero)
-  S' = suc (suc (suc zero))
-  K' = suc (suc (suc (suc zero)))
-  S'' = suc (suc (suc (suc (suc zero))))
-  app = suc (suc (suc (suc (suc (suc zero)))))
+  module _ where
+    private
+      -- helpers
+      S : Fin 7
+      K : Fin 7
+      I : Fin 7
+      S' : Fin 7
+      K' : Fin 7
+      S'' : Fin 7
+      app : Fin 7
+      S = zero
+      K = suc zero
+      I = suc (suc zero)
+      S' = suc (suc (suc zero))
+      K' = suc (suc (suc (suc zero)))
+      S'' = suc (suc (suc (suc (suc zero))))
+      app = suc (suc (suc (suc (suc (suc zero)))))
 
-  law : Law
-  law .Law.ρ X Y (zero , [])                                                             = inj₂ (λ x → App S' (Var (inj₁ x) ∷ []))
-  law .Law.ρ X Y (suc zero , [])                                                         = inj₂ (λ x → App K' (Var (inj₁ x) ∷ []))
-  law .Law.ρ X Y (suc (suc zero) , [])                                                   = inj₂ (λ x → Var (inj₁ x))
-  law .Law.ρ X Y (suc (suc (suc zero)) , (x , _) ∷ [])                                   = inj₂ (λ x' → App S'' (Var (inj₁ x) ∷ Var (inj₁ x') ∷ []))
-  law .Law.ρ X Y (suc (suc (suc (suc zero))) , (x , _) ∷ [])                             = inj₂ (λ _ → Var (inj₁ x))
-  law .Law.ρ X Y (suc (suc (suc (suc (suc zero)))) , (x , _) ∷ (x' , _) ∷ [])            = inj₂ (λ x'' → App app (App app (Var (inj₁ x) ∷ Var (inj₁ x'') ∷ []) ∷ App app (Var (inj₁ x') ∷ Var (inj₁ x'') ∷ []) ∷ []))
-  law .Law.ρ X Y (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₁ y) ∷ (x' , _) ∷ []) = inj₁ (App app (Var (inj₂ y) ∷ Var (inj₁ x') ∷ []))
-  law .Law.ρ X Y (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₂ f) ∷ (x' , _) ∷ []) = inj₁ (Var (inj₂ (f x')))
-  
-  law .Law.natural = {!   !}
-  law .Law.dinatural = {!   !}
+    law : Law
+    law .Law.ρ X Y (zero , [])                                                             = inj₂ (λ x → App S' (Var (inj₁ x) ∷ []))
+    law .Law.ρ X Y (suc zero , [])                                                         = inj₂ (λ x → App K' (Var (inj₁ x) ∷ []))
+    law .Law.ρ X Y (suc (suc zero) , [])                                                   = inj₂ (λ x → Var (inj₁ x))
+    law .Law.ρ X Y (suc (suc (suc zero)) , (x , _) ∷ [])                                   = inj₂ (λ x' → App S'' (Var (inj₁ x) ∷ Var (inj₁ x') ∷ []))
+    law .Law.ρ X Y (suc (suc (suc (suc zero))) , (x , _) ∷ [])                             = inj₂ (λ _ → Var (inj₁ x))
+    law .Law.ρ X Y (suc (suc (suc (suc (suc zero)))) , (x , _) ∷ (x' , _) ∷ [])            = inj₂ (λ x'' → App app (App app (Var (inj₁ x) ∷ Var (inj₁ x'') ∷ []) ∷ App app (Var (inj₁ x') ∷ Var (inj₁ x'') ∷ []) ∷ []))
+    law .Law.ρ X Y (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₁ y) ∷ (x' , _) ∷ []) = inj₁ (App app (Var (inj₂ y) ∷ Var (inj₁ x') ∷ []))
+    law .Law.ρ X Y (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₂ f) ∷ (x' , _) ∷ []) = inj₁ (Var (inj₂ (f x')))
+
+    law .Law.natural f (zero , [])                                                             = ≡-refl
+    law .Law.natural f (suc zero , [])                                                         = ≡-refl
+    law .Law.natural f (suc (suc zero) , [])                                                   = ≡-refl
+    law .Law.natural f (suc (suc (suc zero)) , (x , _) ∷ [])                                   = ≡-refl
+    law .Law.natural f (suc (suc (suc (suc zero))) , (x , _) ∷ [])                             = ≡-refl
+    law .Law.natural f (suc (suc (suc (suc (suc zero)))) , (x , _) ∷ (x' , _) ∷ [])            = ≡-refl
+    law .Law.natural f (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₁ y) ∷ (x' , _) ∷ []) = ≡-refl
+    law .Law.natural f (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₂ g) ∷ (x' , _) ∷ []) = ≡-refl
+
+    law .Law.dinatural f (zero , [])                                                             = ≡-refl
+    law .Law.dinatural f (suc zero , [])                                                         = ≡-refl
+    law .Law.dinatural f (suc (suc zero) , [])                                                   = ≡-refl
+    law .Law.dinatural f (suc (suc (suc zero)) , (x , _) ∷ [])                                   = ≡-refl
+    law .Law.dinatural f (suc (suc (suc (suc zero))) , (x , _) ∷ [])                             = ≡-refl
+    law .Law.dinatural f (suc (suc (suc (suc (suc zero)))) , (x , _) ∷ (x' , _) ∷ [])            = ≡-refl
+    law .Law.dinatural f (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₁ y) ∷ (x' , _) ∷ []) = ≡-refl
+    law .Law.dinatural f (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₂ g) ∷ (x' , _) ∷ []) = ≡-refl
+
+  data XCL : Set o where
+    S : XCL
+    K : XCL
+    I : XCL
+    S' : XCL → XCL
+    K' : XCL → XCL
+    S'' : XCL → XCL → XCL
+    app : XCL → XCL → XCL
 
   ini : Initial (F-Algebras Σ)
-  ini = {!   !}
+  ini .Initial.⊥ .F-Algebra.A = XCL
+
+  ini .Initial.⊥ .F-Algebra.α (zero , [])                                           = S
+  ini .Initial.⊥ .F-Algebra.α (suc zero , [])                                       = K
+  ini .Initial.⊥ .F-Algebra.α (suc (suc zero) , [])                                 = I
+  ini .Initial.⊥ .F-Algebra.α (suc (suc (suc zero)) , x ∷ [])                       = S' x
+  ini .Initial.⊥ .F-Algebra.α (suc (suc (suc (suc zero))) , x ∷ [])                 = K' x
+  ini .Initial.⊥ .F-Algebra.α (suc (suc (suc (suc (suc zero)))) , x ∷ y ∷ [])       = S'' x y
+  ini .Initial.⊥ .F-Algebra.α (suc (suc (suc (suc (suc (suc zero))))) , x ∷ y ∷ []) = app x y
+
+  ini .Initial.⊥-is-initial .IsInitial.! {A} .F-Algebra-Morphism.f S = F-Algebra.α A (zero , [])
+  ini .Initial.⊥-is-initial .IsInitial.! {A} .F-Algebra-Morphism.f K = F-Algebra.α A (suc zero , [])
+  ini .Initial.⊥-is-initial .IsInitial.! {A} .F-Algebra-Morphism.f I = F-Algebra.α A (suc (suc zero) , [])
+  -- TODO fix recursion
+  ini .Initial.⊥-is-initial .IsInitial.! {A} .F-Algebra-Morphism.f (S' x) = F-Algebra.α A (suc (suc (suc zero)) , {! (ini .Initial.⊥-is-initial .IsInitial.! {A} .F-Algebra-Morphism.f x) ∷ []  !})
+  ini .Initial.⊥-is-initial .IsInitial.! {A} .F-Algebra-Morphism.f (K' x) = F-Algebra.α A {!   !}
+  ini .Initial.⊥-is-initial .IsInitial.! {A} .F-Algebra-Morphism.f (S'' x x₁) = F-Algebra.α A {!   !}
+  ini .Initial.⊥-is-initial .IsInitial.! {A} .F-Algebra-Morphism.f (app x x₁) = F-Algebra.α A {!   !}
+
+  ini .Initial.⊥-is-initial .IsInitial.! {A} .F-Algebra-Morphism.commutes x = {!   !}
+  ini .Initial.⊥-is-initial .IsInitial.!-unique = {!  !}
+
+  open Clubsuit law ini
