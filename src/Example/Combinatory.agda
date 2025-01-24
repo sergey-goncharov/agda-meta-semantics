@@ -109,36 +109,6 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
     law .Law.dinatural f (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₁ y) ∷ (x' , _) ∷ []) = ≡-refl
     law .Law.dinatural f (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₂ g) ∷ (x' , _) ∷ []) = ≡-refl
 
-  data XCL : Set o where
-    S : XCL
-    K : XCL
-    I : XCL
-    S' : XCL → XCL
-    K' : XCL → XCL
-    S'' : XCL → XCL → XCL
-    app : XCL → XCL → XCL
+  open Clubsuit law (μΣ xCL)
 
-  ini : Initial (F-Algebras Σ)
-  ini .Initial.⊥ .F-Algebra.A = XCL
-
-  ini .Initial.⊥ .F-Algebra.α (zero , [])                                           = S
-  ini .Initial.⊥ .F-Algebra.α (suc zero , [])                                       = K
-  ini .Initial.⊥ .F-Algebra.α (suc (suc zero) , [])                                 = I
-  ini .Initial.⊥ .F-Algebra.α (suc (suc (suc zero)) , x ∷ [])                       = S' x
-  ini .Initial.⊥ .F-Algebra.α (suc (suc (suc (suc zero))) , x ∷ [])                 = K' x
-  ini .Initial.⊥ .F-Algebra.α (suc (suc (suc (suc (suc zero)))) , x ∷ y ∷ [])       = S'' x y
-  ini .Initial.⊥ .F-Algebra.α (suc (suc (suc (suc (suc (suc zero))))) , x ∷ y ∷ []) = app x y
-
-  ini .Initial.⊥-is-initial .IsInitial.! {A} .F-Algebra-Morphism.f S = F-Algebra.α A (zero , [])
-  ini .Initial.⊥-is-initial .IsInitial.! {A} .F-Algebra-Morphism.f K = F-Algebra.α A (suc zero , [])
-  ini .Initial.⊥-is-initial .IsInitial.! {A} .F-Algebra-Morphism.f I = F-Algebra.α A (suc (suc zero) , [])
-  -- TODO fix recursion
-  ini .Initial.⊥-is-initial .IsInitial.! {A} .F-Algebra-Morphism.f (S' x) = F-Algebra.α A (suc (suc (suc zero)) , {! (ini .Initial.⊥-is-initial .IsInitial.! {A} .F-Algebra-Morphism.f x) ∷ []  !})
-  ini .Initial.⊥-is-initial .IsInitial.! {A} .F-Algebra-Morphism.f (K' x) = F-Algebra.α A {!   !}
-  ini .Initial.⊥-is-initial .IsInitial.! {A} .F-Algebra-Morphism.f (S'' x x₁) = F-Algebra.α A {!   !}
-  ini .Initial.⊥-is-initial .IsInitial.! {A} .F-Algebra-Morphism.f (app x x₁) = F-Algebra.α A {!   !}
-
-  ini .Initial.⊥-is-initial .IsInitial.! {A} .F-Algebra-Morphism.commutes x = {!   !}
-  ini .Initial.⊥-is-initial .IsInitial.!-unique = {!  !}
-
-  open Clubsuit law ini
+  -- TODO test _♣

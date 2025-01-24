@@ -44,7 +44,6 @@ module Example.Signature (o : Level) where
   open Cartesian (Agda-Cartesian o)
   open Cocartesian (Agda-Cocartesian o) renaming (+-unique to []-unique)
   open BinaryProducts products renaming (unique to ⟨⟩-unique)
-  open Terminal terminal
 
   record Signature : Set where
     field
@@ -94,23 +93,21 @@ module Example.Signature (o : Level) where
     }
 
   module _ (Σ : Signature) (V : Set o) where
-    private
-      lift : ∀ (A : F-Algebra (Sig-Functor Σ)) (f : V → F-Algebra.A A) → Σ * V → F-Algebra.A A
-      lift-vec : ∀ (A : F-Algebra (Sig-Functor Σ)) (f : V → F-Algebra.A A) → (n : ℕ) → (args : Vec (Σ * V) n) → Vec (F-Algebra.A A) n
-      lift A f (Var v) = f v
-      lift A f (App op args) = F-Algebra.α A (op , lift-vec A f (arts Σ !! op) args)
-      lift-vec A f zero [] = []
-      lift-vec A f (suc n) (arg ∷ args) = lift A f arg ∷ lift-vec A f n args
+    lift : ∀ (A : F-Algebra (Sig-Functor Σ)) (f : V → F-Algebra.A A) → Σ * V → F-Algebra.A A
+    lift-vec : ∀ (A : F-Algebra (Sig-Functor Σ)) (f : V → F-Algebra.A A) → (n : ℕ) → (args : Vec (Σ * V) n) → Vec (F-Algebra.A A) n
+    lift A f (Var v) = f v
+    lift A f (App op args) = F-Algebra.α A (op , lift-vec A f (arts Σ !! op) args)
+    lift-vec A f zero [] = []
+    lift-vec A f (suc n) (arg ∷ args) = lift A f arg ∷ lift-vec A f n args
+    lift-vec-map : ∀ (A : F-Algebra (Sig-Functor Σ)) (f : V → F-Algebra.A A) (n : ℕ) (args : Vec (Σ * V) n) → lift-vec A f n args ≡ V.map (lift A f) args
+    lift-vec-map A f zero [] = ≡-refl
+    lift-vec-map A f (suc n) (arg ∷ args) = ≋⇒≡ (≡-refl ∷ ≡⇒≋ (lift-vec-map A f n args))
 
     Σ-free : FreeObject (AlgebraForgetfulF (Sig-Functor Σ)) V
     Σ-free .FreeObject.FX = Σ-Algebra V Σ
     Σ-free .FreeObject.η = Var
     (Σ-free FreeObject.*) {A} f .F-Algebra-Morphism.f = lift A f
-    Σ-free .FreeObject._* {A} f .F-Algebra-Morphism.commutes (op , args) = Eq.cong (F-Algebra.α A) (Σ-≡,≡→≡ (≡-refl , lift-vec-map (arts Σ !! op) args))
-      where
-        lift-vec-map : ∀ (n : ℕ) (args : Vec (Σ * V) n) → lift-vec A f n args ≡ V.map (lift A f) args
-        lift-vec-map zero [] = ≡-refl
-        lift-vec-map (suc n) (arg ∷ args) = ≋⇒≡ (≡-refl ∷ ≡⇒≋ (lift-vec-map n args))
+    Σ-free .FreeObject._* {A} f .F-Algebra-Morphism.commutes (op , args) = Eq.cong (F-Algebra.α A) (Σ-≡,≡→≡ (≡-refl , lift-vec-map A f (arts Σ !! op) args))
     Σ-free .FreeObject.*-lift f x = ≡-refl
     Σ-free .FreeObject.*-uniq {A} f g eq = uniq
       where
@@ -120,3 +117,16 @@ module Example.Signature (o : Level) where
         uniq (App op args) rewrite F-Algebra-Morphism.commutes g (op , args) = Eq.cong (F-Algebra.α A) (Σ-≡,≡→≡ (≡-refl , uniq-vec (arts Σ !! op) args))
         uniq-vec zero [] = ≡-refl
         uniq-vec (suc n) (arg ∷ args) = ≋⇒≡ ((uniq arg) ∷ ≡⇒≋ (uniq-vec n args))
+
+  μΣ : (Σ : Signature) → Initial (F-Algebras (Sig-Functor Σ))
+  μΣ Σ .Initial.⊥ .F-Algebra.A = Σ * ⊥
+  μΣ Σ .Initial.⊥ .F-Algebra.α (op , args) = App op args
+  μΣ Σ .Initial.⊥-is-initial .IsInitial.! {A} .F-Algebra-Morphism.f = lift Σ ⊥ A (λ ())
+  μΣ Σ .Initial.⊥-is-initial .IsInitial.! {A} .commutes (op , args) = Eq.cong (F-Algebra.α A) (Σ-≡,≡→≡ (≡-refl , lift-vec-map Σ ⊥ A (λ ()) (arts Σ !! op) args))
+  μΣ Σ .Initial.⊥-is-initial .IsInitial.!-unique {A} f = uniq
+    where
+      uniq : ∀ (x : Σ * ⊥) → lift Σ ⊥ A (λ ()) x ≡ ⟪ f ⟫ x
+      uniq-vec : (n : ℕ) → (args : Vec (Σ * ⊥) n) → lift-vec Σ ⊥ A (λ ()) n args ≡ V.map ⟪ f ⟫ args
+      uniq-vec zero [] = ≡-refl
+      uniq-vec (suc n) (arg ∷ args) = ≋⇒≡ (uniq arg ∷ ≡⇒≋ (uniq-vec n args))
+      uniq (App op args) = Eq.trans (Eq.cong (F-Algebra.α A) (Σ-≡,≡→≡ (≡-refl , uniq-vec (arts Σ !! op) args))) (Eq.sym (F-Algebra-Morphism.commutes f (op , args)))
