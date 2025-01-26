@@ -12,6 +12,8 @@ open import Categories.Category
 open import Data.Product using (_,_)
 open import Data.Fin.Base
 open import Categories.Functor.Algebra
+open import Data.Empty.Polymorphic
+open import Data.Nat.Base using (ℕ)
 
 
 open import Categories.Category.Construction.F-Algebras
@@ -62,7 +64,6 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   freeAlgebras X = Σ-free xCL X
 
   open Laws freeAlgebras
-
   module _ where
     private
       -- helpers
@@ -111,4 +112,80 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
 
   open Clubsuit law (μΣ xCL)
 
-  -- TODO test _♣
+  μΣ₀ : Set o
+  μΣ₀ = F-Algebra.A (Initial.⊥ (μΣ xCL))
+
+  γ : μΣ₀ → B.₀ (μΣ₀ , μΣ₀)
+  γ = (Initial.⊥ (μΣ xCL)) ♣
+
+  -- NOTE: This is not at all terminating, use at own risk
+  {-# TERMINATING #-}
+  γ* : μΣ₀ → B.₀ (μΣ₀ , μΣ₀)
+  γ* t with γ t 
+  ...     | inj₁ t' = γ* t'
+  ...     | inj₂ f = inj₂ f
+
+  -- Eval with gas
+  γk : ℕ → μΣ₀ → B.₀ (μΣ₀ , μΣ₀)
+  γk ℕ.zero t = inj₁ t
+  γk (ℕ.suc n) t with γ t
+  ...               | inj₁ t' = γk n t'
+  ...               | inj₂ f = inj₂ f
+
+
+  -- helpers
+  S : xCL * ⊥
+  S = App zero []
+  K : xCL * ⊥
+  K = App (suc zero) []
+  I : xCL * ⊥
+  I = App (suc (suc zero)) []
+  -- S' : xCL * ⊥
+  -- S' = App zero []
+  -- K' : xCL * ⊥
+  -- K' = App zero []
+  -- S'' : xCL * ⊥
+  -- S'' = App zero []
+
+  infixl 10 _⁎_
+  _⁎_ : xCL * ⊥ → xCL * ⊥ → xCL * ⊥
+  t ⁎ s = App (suc (suc (suc (suc (suc (suc zero)))))) (t ∷ s ∷ [])
+
+  ----- I I -> I
+  double-I : γ (I ⁎ I) ≡ inj₁ I
+  double-I = ≡-refl
+  -----
+
+  ----- KIS ->* I
+  kis-I : γ* ((K ⁎ I) ⁎ S) ≡ γ I
+  kis-I = ≡-refl
+
+  ----- ((SK)I)((KI)S) ->* I
+  skikis-I : γ* (((S ⁎ K) ⁎ I) ⁎ ((K ⁎ I) ⁎ S)) ≡ γ I
+  skikis-I = ≡-refl
+  -----
+
+  ωk : ℕ → xCL * ⊥
+  ωk ℕ.zero = S ⁎ I ⁎ I
+  ωk (ℕ.suc n) = I ⁎ (ωk n)
+  Ωk : ℕ → xCL * ⊥
+  Ωk n = ωk n ⁎ ωk n
+
+  -- Ω₀ ->* Ω₁
+  Ω₀-Ω₁ : γk 3 (Ωk 0) ≡ inj₁ (Ωk 1)
+  Ω₀-Ω₁ = ≡-refl
+
+  -- Ω₁ ->* Ω₂
+  Ω₁-Ω₂ : γk 4 (Ωk 1) ≡ inj₁ (Ωk 2)
+  Ω₁-Ω₂ = ≡-refl
+
+  -- Ω₂ ->* Ω₃
+  Ω₂-Ω₃ : γk 5 (Ωk 2) ≡ inj₁ (Ωk 3)
+  Ω₂-Ω₃ = ≡-refl
+
+  -- Ωk ->* Ωk+1
+  Ωk-Ωk+1 : ∀ (k : ℕ) → γk (ℕ.suc (ℕ.suc (ℕ.suc k))) (Ωk k) ≡ inj₁ (Ωk (ℕ.suc k))
+  Ωk-Ωk+1 k = {! ≡-refl  !}
+  -- Ωk-Ωk+1 ℕ.zero = Ω₀-Ω₁
+  -- Ωk-Ωk+1 (ℕ.suc k) = {! Ωk-Ωk+1 k  !}
+  -- Ωk-Ωk+1 (ℕ.suc k) rewrite Ωk-Ωk+1 k = {! ≡-refl  !}
