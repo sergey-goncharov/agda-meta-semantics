@@ -85,34 +85,54 @@ module HOGSOS {o ℓ e} (C : Category o ℓ e) (cartesian : Cartesian C) (cocart
         private
           w : ⟦ μΣ ⟧ ⇒ ⟦ A ⟧
           w = π₁ ∘ club'
+          
           w-comm : w ∘ ι ≈ a ∘ Σ.₁ w
           w-comm = begin 
-            w ∘ ι                                                                                ≈⟨ pullʳ club'-commutes ⟩ 
-            π₁ ∘ ((id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟪ ! ⟫ ≈⟨ pullˡ (pullˡ (project₁ ○ identityˡ)) ⟩ 
-            (π₁ ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟪ ! ⟫                                    ≈⟨ project₁ ⟩∘⟨refl ⟩ 
-            (a ∘ Σ.₁ π₁) ∘ Σ.₁ ⟪ ! ⟫                                                             ≈⟨ pullʳ (sym Σ.homomorphism) ⟩ 
-            a ∘ Σ.₁ w                                                                            ∎
+            w ∘ ι
+              ≈⟨ pullʳ club'-commutes ⟩ 
+            π₁ ∘ ((id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟪ ! ⟫
+              ≈⟨ pullˡ (pullˡ (project₁ ○ identityˡ)) ⟩ 
+            (π₁ ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟪ ! ⟫
+              ≈⟨ project₁ ⟩∘⟨refl ⟩ 
+            (a ∘ Σ.₁ π₁) ∘ Σ.₁ ⟪ ! ⟫
+              ≈⟨ pullʳ (sym Σ.homomorphism) ⟩ 
+            a ∘ Σ.₁ w
+           ∎
+           
           w-it : ⟪ ! {A} ⟫ ≈ w
           w-it = !-unique (record { f = w ; commutes = begin 
-            (π₁ ∘ ⟪ ! {club'-alg} ⟫) ∘ ι                                                                     ≈⟨ pullʳ (F-Algebra-Morphism.commutes (! {club'-alg})) ⟩
-            π₁ ∘ ((id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟪ ! {club'-alg} ⟫ ≈⟨ pullˡ (pullˡ project₁) ⟩
-            ((id ∘ π₁) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟪ ! {club'-alg} ⟫                             ≈⟨ (∘-resp-≈ˡ identityˡ ○ project₁) ⟩∘⟨refl ⟩
-            (a ∘ Σ.₁ π₁) ∘ Σ.₁ ⟪ ! {club'-alg} ⟫                                                             ≈⟨ pullʳ (sym Σ.homomorphism) ⟩
-            a ∘ Σ.₁ (π₁ ∘ ⟪ ! {club'-alg} ⟫)                                                                 ∎ })
+            (π₁ ∘ ⟪ ! {club'-alg} ⟫) ∘ ι
+              ≈⟨ pullʳ (F-Algebra-Morphism.commutes (! {club'-alg})) ⟩
+            π₁ ∘ ((id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟪ ! {club'-alg} ⟫
+              ≈⟨ pullˡ (pullˡ project₁) ⟩
+            ((id ∘ π₁) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟪ ! {club'-alg} ⟫
+              ≈⟨ (∘-resp-≈ˡ identityˡ ○ project₁) ⟩∘⟨refl ⟩
+            (a ∘ Σ.₁ π₁) ∘ Σ.₁ ⟪ ! {club'-alg} ⟫
+              ≈⟨ pullʳ (sym Σ.homomorphism) ⟩
+            a ∘ Σ.₁ (π₁ ∘ ⟪ ! {club'-alg} ⟫)
+           ∎ })
 
           club'≈w-club : club' ≈ ⟨ w , _♣ ⟩
           club'≈w-club = sym g-η
 
         ♣-comm : _♣ ∘ ι ≈ B.₁ (id , â) ∘ B.₁ (id , ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ∘ Σ.₁ ⟨ ⟪ ! {A} ⟫ , _♣ ⟩
         ♣-comm = begin 
-          (π₂ ∘ club') ∘ ι                                                                    ≈⟨ pullʳ club'-commutes ⟩ 
-          π₂ ∘ ((id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟪ ! ⟫ ≈⟨ pullˡ (pullˡ project₂) ⟩ 
-          ((B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ π₂) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟪ ! ⟫      ≈⟨ pullʳ project₂ ⟩∘⟨refl ⟩ 
-          (B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧) ∘ Σ.₁ club'                             ≈⟨ refl⟩∘⟨ Σ.F-resp-≈ club'≈w-club ⟩ 
-          (B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧) ∘ Σ.₁ ⟨ w , _♣ ⟩                      ≈⟨ refl⟩∘⟨ Σ.F-resp-≈ (⟨⟩-cong₂ (sym w-it) refl)⟩ 
-          (B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧) ∘ Σ.₁ ⟨ ⟪ ! {A} ⟫ , _♣ ⟩              ≈⟨ assoc ⟩
-          B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ∘ Σ.₁ ⟨ ⟪ ! {A} ⟫ , _♣ ⟩                ≈˘⟨ pullˡ (sym B.homomorphism) ○ ∘-resp-≈ˡ (B.F-resp-≈ (identity² , refl)) ⟩
-          B.₁ (id , â) ∘ B.₁ (id , ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ∘ Σ.₁ ⟨ ⟪ ! {A} ⟫ , _♣ ⟩     ∎
+          (π₂ ∘ club') ∘ ι
+            ≈⟨ pullʳ club'-commutes ⟩ 
+          π₂ ∘ ((id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟪ ! ⟫
+            ≈⟨ pullˡ (pullˡ project₂) ⟩ 
+          ((B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ π₂) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟪ ! ⟫
+            ≈⟨ pullʳ project₂ ⟩∘⟨refl ⟩ 
+          (B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧) ∘ Σ.₁ club'
+            ≈⟨ refl⟩∘⟨ Σ.F-resp-≈ club'≈w-club ⟩ 
+          (B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧) ∘ Σ.₁ ⟨ w , _♣ ⟩
+            ≈⟨ refl⟩∘⟨ Σ.F-resp-≈ (⟨⟩-cong₂ (sym w-it) refl)⟩ 
+          (B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧) ∘ Σ.₁ ⟨ ⟪ ! {A} ⟫ , _♣ ⟩
+            ≈⟨ assoc ⟩
+          B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ∘ Σ.₁ ⟨ ⟪ ! {A} ⟫ , _♣ ⟩
+            ≈˘⟨ pullˡ (sym B.homomorphism) ○ ∘-resp-≈ˡ (B.F-resp-≈ (identity² , refl)) ⟩
+          B.₁ (id , â) ∘ B.₁ (id , ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ∘ Σ.₁ ⟨ ⟪ ! {A} ⟫ , _♣ ⟩
+         ∎
 
         ♣-unique : ∀ (f : ⟦ μΣ ⟧ ⇒ B.₀ (⟦ A ⟧ , ⟦ A ⟧)) 
           → f ∘ ι ≈ B.₁ (id , â) ∘ B.₁ (id , ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ∘ Σ.₁ ⟨ ⟪ ! {A} ⟫ , f ⟩
@@ -120,14 +140,22 @@ module HOGSOS {o ℓ e} (C : Category o ℓ e) (cartesian : Cartesian C) (cocart
         ♣-unique f f-comm = begin 
           f              ≈˘⟨ project₂ ⟩ 
           π₂ ∘ ⟨ w , f ⟩ ≈˘⟨ refl⟩∘⟨ !-unique (record { f = ⟨ w , f ⟩ ; commutes = helper }) ⟩ 
-          π₂ ∘ club'    ∎
+          π₂ ∘ club'
+         ∎
           where
           helper : ⟨ w , f ⟩ ∘ ι ≈ ((id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟨ w , f ⟩
           helper = begin 
-            ⟨ w , f ⟩ ∘ ι                                                                                ≈⟨ ⟨⟩∘ ⟩ 
-            ⟨ w ∘ ι , f ∘ ι ⟩                                                                            ≈⟨ ⟨⟩-cong₂ w-comm f-comm ⟩ 
-            ⟨ a ∘ Σ.₁ w , B.₁ (id , â) ∘ B.₁ (id , ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ∘ Σ.₁ ⟨ ⟪ ! {A} ⟫ , f ⟩ ⟩ ≈⟨ ⟨⟩-cong₂ refl (pullˡ (sym B.homomorphism ○ B.F-resp-≈ (identity² , refl))) ⟩ 
-            ⟨ a ∘ Σ.₁ w , B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ∘ Σ.₁ ⟨ ⟪ ! {A} ⟫ , f ⟩ ⟩            ≈⟨ ⟨⟩-cong₂ refl (∘-resp-≈ʳ (∘-resp-≈ʳ (Σ.F-resp-≈ (⟨⟩-cong₂ w-it refl)))) ⟩ 
-            ⟨ a ∘ Σ.₁ w , B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ∘ Σ.₁ ⟨ w , f ⟩ ⟩                    ≈˘⟨ ⟨⟩∘ ○ ⟨⟩-cong₂ (pullʳ (sym Σ.homomorphism ○ Σ.F-resp-≈ project₁)) assoc ⟩ 
-            ⟨ a ∘ Σ.₁ π₁ , B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ⟩ ∘ Σ.₁ ⟨ w , f ⟩                   ≈˘⟨ (⁂∘⟨⟩ ○ ⟨⟩-cong₂ identityˡ refl) ⟩∘⟨refl ⟩ 
-            ((id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟨ w , f ⟩          ∎
+            ⟨ w , f ⟩ ∘ ι
+              ≈⟨ ⟨⟩∘ ⟩ 
+            ⟨ w ∘ ι , f ∘ ι ⟩
+              ≈⟨ ⟨⟩-cong₂ w-comm f-comm ⟩ 
+            ⟨ a ∘ Σ.₁ w , B.₁ (id , â) ∘ B.₁ (id , ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ∘ Σ.₁ ⟨ ⟪ ! {A} ⟫ , f ⟩ ⟩
+              ≈⟨ ⟨⟩-cong₂ refl (pullˡ (sym B.homomorphism ○ B.F-resp-≈ (identity² , refl))) ⟩ 
+            ⟨ a ∘ Σ.₁ w , B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ∘ Σ.₁ ⟨ ⟪ ! {A} ⟫ , f ⟩ ⟩
+              ≈⟨ ⟨⟩-cong₂ refl (∘-resp-≈ʳ (∘-resp-≈ʳ (Σ.F-resp-≈ (⟨⟩-cong₂ w-it refl)))) ⟩ 
+            ⟨ a ∘ Σ.₁ w , B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ∘ Σ.₁ ⟨ w , f ⟩ ⟩
+              ≈˘⟨ ⟨⟩∘ ○ ⟨⟩-cong₂ (pullʳ (sym Σ.homomorphism ○ Σ.F-resp-≈ project₁)) assoc ⟩ 
+            ⟨ a ∘ Σ.₁ π₁ , B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ⟩ ∘ Σ.₁ ⟨ w , f ⟩
+              ≈˘⟨ (⁂∘⟨⟩ ○ ⟨⟩-cong₂ identityˡ refl) ⟩∘⟨refl ⟩ 
+            ((id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟨ w , f ⟩
+           ∎
