@@ -51,7 +51,6 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   B .Functor.homomorphism (inj₁ x) = ≡-refl
   B .Functor.homomorphism (inj₂ y) = ≡-refl
   B .Functor.F-resp-≈ {A , B} {C , D} {f₁ , f₂} {g₁ , g₂} (f₁≈g₁ , f₂≈g₂) (inj₁ x) = Eq.cong inj₁ (f₂≈g₂ x)
-  -- TODO: possible without extensionality??
   B .Functor.F-resp-≈ {A , B} {C , D} {f₁ , f₂} {g₁ , g₂} (f₁≈g₁ , f₂≈g₂) (inj₂ h) = Eq.cong inj₂ (ext helper)
     where
     helper : ∀ (x : C) → f₂ (h (f₁ x)) ≡ g₂ (h (g₁ x))
@@ -115,22 +114,20 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   μΣ₀ : Set o
   μΣ₀ = F-Algebra.A (Initial.⊥ (μΣ xCL))
 
+  -- eval (single step reduction as function)
   γ : μΣ₀ → B.₀ (μΣ₀ , μΣ₀)
   γ = (Initial.⊥ (μΣ xCL)) ♣
 
-  -- NOTE: This is not at all terminating, use at own risk
-  {-# TERMINATING #-}
-  γ* : μΣ₀ → B.₀ (μΣ₀ , μΣ₀)
-  γ* t with γ t 
-  ...     | inj₁ t' = γ* t'
-  ...     | inj₂ f = inj₂ f
-
-  -- Eval with gas
+  -- Eval with fuel
   γk : ℕ → μΣ₀ → B.₀ (μΣ₀ , μΣ₀)
   γk ℕ.zero t = inj₁ t
   γk (ℕ.suc n) t with γ t
   ...               | inj₁ t' = γk n t'
-  ...               | inj₂ f = inj₂ f
+  ...               | inj₂ f  = inj₂ f
+
+  -- Eval with a lot of fuel (should feel like transitive-reflexive closure)
+  γ* : μΣ₀ → B.₀ (μΣ₀ , μΣ₀)
+  γ* = γk 100000
 
 
   -- helpers
@@ -140,30 +137,77 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   K = App (suc zero) []
   I : xCL * ⊥
   I = App (suc (suc zero)) []
-  -- S' : xCL * ⊥
-  -- S' = App zero []
-  -- K' : xCL * ⊥
-  -- K' = App zero []
-  -- S'' : xCL * ⊥
-  -- S'' = App zero []
+  S' : xCL * ⊥ → xCL * ⊥
+  S' x = App (suc (suc (suc zero))) (x ∷ [])
+  K' : xCL * ⊥ → xCL * ⊥
+  K' x = App (suc (suc (suc (suc zero)))) (x ∷ [])
+  S'' : xCL * ⊥ → xCL * ⊥ → xCL * ⊥
+  S'' x y = App (suc (suc (suc (suc (suc zero))))) (x ∷ y ∷ []) 
 
+  -- application helper
   infixl 10 _⁎_
   _⁎_ : xCL * ⊥ → xCL * ⊥ → xCL * ⊥
   t ⁎ s = App (suc (suc (suc (suc (suc (suc zero)))))) (t ∷ s ∷ [])
 
+  -- single step reduction relation
+  infixr 5 _↪_
+  _↪_ : xCL * ⊥ → xCL * ⊥ → Set o
+  t ↪ s = γ t ≡ inj₁ s
+
+  -- k-step reduction relation
+  infixr 5 [_]_↪k_
+  [_]_↪k_ : ℕ → xCL * ⊥ → xCL * ⊥ → Set o
+  [ n ] t ↪k s = γk (ℕ.suc n) t ≡ γ s
+  -- [ ℕ.zero ] t ↪k s = t ≡ s
+  -- [ ℕ.suc n ] t ↪k s with γ t 
+  -- ...                    | inj₁ t' = [ n ] t' ↪k s
+  -- ...                    | inj₂ f = ⊥
+
+  -- multi step reduction relation (only works / makes sense for irreducible terms on the right side)
+  infixr 5 _↪*_
+  _↪*_ : xCL * ⊥ → xCL * ⊥ → Set o
+  t ↪* s = γ* t ≡ γ s
+
   ----- I I -> I
-  double-I : γ (I ⁎ I) ≡ inj₁ I
+  double-I : I ⁎ I ↪ I
   double-I = ≡-refl
   -----
 
   ----- KIS ->* I
-  kis-I : γ* ((K ⁎ I) ⁎ S) ≡ γ I
+  kis-I : K ⁎ I ⁎ S ↪* I
   kis-I = ≡-refl
 
   ----- ((SK)I)((KI)S) ->* I
-  skikis-I : γ* (((S ⁎ K) ⁎ I) ⁎ ((K ⁎ I) ⁎ S)) ≡ γ I
+  skikis-I : S ⁎ K ⁎ I ⁎ (K ⁎ I ⁎ S) ↪* I
   skikis-I = ≡-refl
   -----
+
+  --- EXAMPLE 3.2
+  ----- SKI -> S'(K)I
+  skis'ki : ((S ⁎ K) ⁎ I) ↪ (S' K ⁎ I) 
+  skis'ki = ≡-refl
+  -----
+
+  ----- S'(K)I -> S''(K,I)
+  s'kis''ki : (S' (K) ⁎ I) ↪ S'' (K) (I)
+  s'kis''ki = ≡-refl
+  -----
+
+  ----- SKK -> S'(K)K
+  skks'kk : ((S ⁎ K) ⁎ K) ↪ (S' K ⁎ K)
+  skks'kk = ≡-refl 
+  -----
+
+  ----- S'(K)K -> S''(K,K)
+  s'kks''kk : (S' (K) ⁎ K) ↪ S'' (K) (K)
+  s'kks''kk = ≡-refl
+  -----
+  ---
+
+  -- TODO this is the wrong bracketing of t
+  _**_ : xCL * ⊥ → ℕ → xCL * ⊥
+  t ** ℕ.zero = t
+  t ** (ℕ.suc n) = t ⁎ (t ** n)
 
   ωk : ℕ → xCL * ⊥
   ωk ℕ.zero = S ⁎ I ⁎ I
@@ -171,21 +215,66 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   Ωk : ℕ → xCL * ⊥
   Ωk n = ωk n ⁎ ωk n
 
+  Ω₀- : Ωk 0 ↪ S' (I) ⁎ I ⁎ (S ⁎ I ⁎ I)
+  Ω₀- = ≡-refl
+
+  Ω₀-- : S' (I) ⁎ I ⁎ (S ⁎ I ⁎ I) ↪ S'' I I ⁎ (S ⁎ I ⁎ I)
+  Ω₀-- = ≡-refl
+
+  Ω₀--- : S'' I I ⁎ (S ⁎ I ⁎ I) ↪ Ωk 1
+  Ω₀--- = ≡-refl
+
   -- Ω₀ ->* Ω₁
-  Ω₀-Ω₁ : γk 3 (Ωk 0) ≡ inj₁ (Ωk 1)
+  Ω₀-Ω₁ : [ 3 ] Ωk 0 ↪k Ωk 1
   Ω₀-Ω₁ = ≡-refl
 
+  Ω₁- : Ωk 1 ↪ S ⁎ I ⁎ I ⁎ (I ⁎ (S ⁎ I ⁎ I))
+  Ω₁- = ≡-refl
+
+  Ω₁-- : S ⁎ I ⁎ I ⁎ (I ⁎ (S ⁎ I ⁎ I)) ↪ S' (I) ⁎ I ⁎ (I ⁎ (S ⁎ I ⁎ I))
+  Ω₁-- = ≡-refl
+
+  Ω₁--- : S' (I) ⁎ I ⁎ (I ⁎ (S ⁎ I ⁎ I)) ↪ S'' (I) (I) ⁎ (I ⁎ (S ⁎ I ⁎ I))
+  Ω₁--- = ≡-refl
+
+  Ω₁---- : S'' (I) (I) ⁎ (I ⁎ (S ⁎ I ⁎ I)) ↪ Ωk 2
+  Ω₁---- = ≡-refl
+
   -- Ω₁ ->* Ω₂
-  Ω₁-Ω₂ : γk 4 (Ωk 1) ≡ inj₁ (Ωk 2)
+  Ω₁-Ω₂ : [ 4 ] Ωk 1 ↪k Ωk 2
   Ω₁-Ω₂ = ≡-refl
 
   -- Ω₂ ->* Ω₃
-  Ω₂-Ω₃ : γk 5 (Ωk 2) ≡ inj₁ (Ωk 3)
+  Ω₂-Ω₃ : [ 5 ] Ωk 2 ↪k Ωk 3
   Ω₂-Ω₃ = ≡-refl
 
+  preI : ℕ → xCL * ⊥ → xCL * ⊥
+  preI ℕ.zero t = t
+  preI (ℕ.suc n) t = I ⁎ (preI n t)
+
+  It : ∀ (t : xCL * ⊥) → γ (I ⁎ t) ≡ inj₁ t
+  It (App zero []) = ≡-refl
+  It (App (suc zero) []) = ≡-refl
+  It (App (suc (suc zero)) []) = ≡-refl
+  -- TODO this needs w-comm
+  It (App (suc (suc (suc zero))) (x ∷ [])) = Eq.cong inj₁ (Eq.sym (w-comm (Initial.⊥ (μΣ xCL)) (suc (suc (suc zero)) , {!   !} ∷ [])))
+  It (App (suc f) x) = {!   !}
+
+  preI-kstep : ∀ (k : ℕ) (t : xCL * ⊥) → [ k ] preI k t ↪k t
+  preI-kstep ℕ.zero t = {!   !} -- ≡-refl
+  -- TODO does this also just need w-comm?
+  preI-kstep (ℕ.suc k) t = {! preI-kstep k t  !}
+
+  Ωk-kstep : ∀ (k : ℕ) → [ k ] Ωk k ↪k S ⁎ I ⁎ I ⁎ ωk k
+  Ωk-kstep ℕ.zero = ≡-refl
+  -- TODO and this?
+  Ωk-kstep (ℕ.suc k) = {!  Ωk-kstep k !} -- [ suc k ] Ωk (suc k) ↪k S ⁎ I ⁎ I ⁎ ωk (suc k)
+
   -- Ωk ->* Ωk+1
-  Ωk-Ωk+1 : ∀ (k : ℕ) → γk (ℕ.suc (ℕ.suc (ℕ.suc k))) (Ωk k) ≡ inj₁ (Ωk (ℕ.suc k))
-  Ωk-Ωk+1 k = {! ≡-refl  !}
+  Ωk-Ωk+1 : ∀ (k : ℕ) → [ ℕ.suc (ℕ.suc (ℕ.suc k)) ] Ωk k ↪k Ωk (ℕ.suc k)
+  Ωk-Ωk+1 ℕ.zero = ≡-refl
+  -- TODO and this?
+  Ωk-Ωk+1 (ℕ.suc k) rewrite (Ωk-kstep (ℕ.suc (ℕ.suc (ℕ.suc (ℕ.suc k))))) = {!   !}
   -- Ωk-Ωk+1 ℕ.zero = Ω₀-Ω₁
   -- Ωk-Ωk+1 (ℕ.suc k) = {! Ωk-Ωk+1 k  !}
   -- Ωk-Ωk+1 (ℕ.suc k) rewrite Ωk-Ωk+1 k = {! ≡-refl  !}
