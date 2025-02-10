@@ -23,7 +23,7 @@ open import Categories.Object.Initial
 open import Axiom.Extensionality.Propositional using (Extensionality)
 
 import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_) renaming (refl to ≡-refl)
+open Eq using (_≡_) renaming (refl to ≡-refl; trans to ≡-trans)
 
 open import Data.Sum
 
@@ -33,7 +33,7 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   open Category (Agda o)
   open HomReasoning
   open Equiv
-  open import Example.Signature o
+  open import Example.Signature o renaming (lift to sig-lift)
 
   -- t , s ∷= S | K | I | S'(t) | K'(t) | S''(t,s) | app(t,s)
   xCL : Signature
@@ -253,12 +253,18 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   preI (ℕ.suc n) t = I ⁎ (preI n t)
 
   It : ∀ (t : xCL * ⊥) → γ (I ⁎ t) ≡ inj₁ t
-  It (App zero []) = ≡-refl
-  It (App (suc zero) []) = ≡-refl
-  It (App (suc (suc zero)) []) = ≡-refl
+  It t = ≡-trans {!w!} {!!}
+    where
+      w : γ (I ⁎ t) ≡ inj₁ (sig-lift xCL Data.Empty.Polymorphic.⊥ (Initial.⊥ (μΣ xCL)) (λ ()) t) 
+      w = ♣-comm (Initial.⊥ (μΣ xCL)) (suc (suc (suc (suc (suc (suc zero))))), I ∷ (t ∷ [])) 
+    
+  
+  -- It (App zero []) = ≡-refl
+  -- It (App (suc zero) []) = ≡-refl
+  -- It (App (suc (suc zero)) []) = ≡-refl
   -- TODO this needs w-comm
-  It (App (suc (suc (suc zero))) (x ∷ [])) = Eq.cong inj₁ (Eq.sym (w-comm (Initial.⊥ (μΣ xCL)) (suc (suc (suc zero)) , {!   !} ∷ [])))
-  It (App (suc f) x) = {!   !}
+  -- It (App (suc (suc (suc zero))) (x ∷ [])) = {!!} -- Eq.cong inj₁ (Eq.sym (w-comm (Initial.⊥ (μΣ xCL)) (suc (suc (suc zero)) , {!   !} ∷ [])))
+  -- It (App (suc f) x) = {!   !}
 
   preI-kstep : ∀ (k : ℕ) (t : xCL * ⊥) → [ k ] preI k t ↪k t
   preI-kstep ℕ.zero t = {!   !} -- ≡-refl
