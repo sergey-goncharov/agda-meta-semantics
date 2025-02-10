@@ -1,4 +1,4 @@
-{-# OPTIONS --allow-unsolved-metas --without-K #-}
+{-# OPTIONS --safe --without-K #-}
 
 open import Level renaming (suc to ℓ-suc; zero to ℓ-zero)
 
@@ -14,7 +14,6 @@ open import Data.Fin.Base
 open import Categories.Functor.Algebra
 open import Data.Empty.Polymorphic
 open import Data.Nat.Base using (ℕ)
-
 
 open import Categories.Category.Construction.F-Algebras
 open import Categories.FreeObjects.Free
@@ -253,13 +252,14 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   preI (ℕ.suc n) t = I ⁎ (preI n t)
 
   It : ∀ (t : xCL * ⊥) → γ (I ⁎ t) ≡ inj₁ t
-  It t = ≡-trans {!w!} {!!}
+
+  -- This should be replaced by equaitional reasoning
+  It t = ≡-trans w (Eq.cong inj₁ ( {!lift-var ? ? t!})) 
     where
-      w : γ (I ⁎ t) ≡ inj₁ (sig-lift xCL Data.Empty.Polymorphic.⊥ (Initial.⊥ (μΣ xCL)) (λ ()) t) 
+      w : γ (I ⁎ t) ≡ inj₁ (sig-lift xCL Data.Empty.Polymorphic.⊥ (Initial.⊥ (μΣ xCL)) (λ ()) t) -- not clear, why we have λ () in the first place 
       w = ♣-comm (Initial.⊥ (μΣ xCL)) (suc (suc (suc (suc (suc (suc zero))))), I ∷ (t ∷ [])) 
-    
-  
-  -- It (App zero []) = ≡-refl
+
+   -- It (App zero []) = ≡-refl
   -- It (App (suc zero) []) = ≡-refl
   -- It (App (suc (suc zero)) []) = ≡-refl
   -- TODO this needs w-comm
