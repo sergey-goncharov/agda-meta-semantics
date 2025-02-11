@@ -159,3 +159,11 @@ module HOGSOS {o ℓ e} (C : Category o ℓ e) (cartesian : Cartesian C) (cocart
               ≈˘⟨ (⁂∘⟨⟩ ○ ⟨⟩-cong₂ identityˡ refl) ⟩∘⟨refl ⟩ 
             ((id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟨ w , f ⟩
            ∎
+
+      γ : ⟦ μΣ ⟧ ⇒ B.₀ (⟦ μΣ ⟧ , ⟦ μΣ ⟧)
+      γ = (Initial.⊥ ini) ♣
+
+      --  ⟪ FreeObject._* {X = ⟦ A ⟧} (freeAlgebras ⟦ A ⟧) {A = A} (id {⟦ A ⟧}) ⟫
+      γ-rec : γ ∘ ι ≈ B.₁ (id ,  ⟪ ((freeAlgebras ⟦ μΣ ⟧) FreeObject.*) {!!} ⟫)  ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ ⟪ ! {μΣ} ⟫ , γ ⟩ 
+      γ-rec = {!!}
+
