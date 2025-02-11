@@ -9,11 +9,12 @@ open import Category.Instance.Properties.Sets.Cocartesian using () renaming (Set
 open import Categories.Functor
 open import Categories.Functor.Bifunctor
 open import Categories.Category
-open import Data.Product using (_,_)
-open import Data.Fin.Base
+open import Data.Product using (_,_; proj₁; proj₂)
+open import Data.Fin.Base hiding (_+_)
 open import Categories.Functor.Algebra
 open import Data.Empty.Polymorphic
-open import Data.Nat.Base using (ℕ)
+open import Data.Nat.Base using (ℕ; _+_)
+open import Data.Nat.Properties using (+-identityʳ; +-suc; +-comm)
 
 open import Categories.Category.Construction.F-Algebras
 open import Categories.FreeObjects.Free
@@ -23,9 +24,10 @@ open import Axiom.Extensionality.Propositional using (Extensionality)
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_) renaming (refl to ≡-refl; trans to ≡-trans)
-open Eq.≡-Reasoning --using (begin_; _≡⟨_⟩_; step-≡; _∎)
+open Eq.≡-Reasoning
 
 open import Data.Sum
+open import Data.Sum.Properties using (inj₁-injective)
 
 open import Data.Vec using (_∷_; [])
 open import Data.Vec.Properties using (map-id)
@@ -156,12 +158,14 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
 
   -- k-step reduction relation
   infixr 5 [_]_↪k_
-  [_]_↪k_ : ℕ → xCL * ⊥ → xCL * ⊥ → Set o
-  [ n ] t ↪k s = γk (ℕ.suc n) t ≡ γ s
-  -- [ ℕ.zero ] t ↪k s = t ≡ s
-  -- [ ℕ.suc n ] t ↪k s with γ t 
-  -- ...                    | inj₁ t' = [ n ] t' ↪k s
-  -- ...                    | inj₂ f = ⊥
+  data [_]_↪k_ : ℕ → xCL * ⊥ → xCL * ⊥ → Set o where
+    base↪ : ∀ {t : xCL * ⊥} → [ ℕ.zero ] t ↪k t
+    step↪ : ∀ {k : ℕ} {t t' s : xCL * ⊥} → γ t ≡ inj₁ t' → [ k ] t' ↪k s → [ ℕ.suc k ] t ↪k s
+
+  -- k-step reduction function
+  [_]_↪k'_ : ℕ → xCL * ⊥ → xCL * ⊥ → Set o
+  [ ℕ.zero ] t ↪k' s = t ≡ s
+  [ ℕ.suc n ] t ↪k' s = γk (ℕ.suc n) t ≡ inj₁ s
 
   -- multi step reduction relation (only works / makes sense for irreducible terms on the right side)
   infixr 5 _↪*_
@@ -204,55 +208,17 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   -----
   ---
 
-  -- TODO this is the wrong bracketing of t
-  _**_ : xCL * ⊥ → ℕ → xCL * ⊥
-  t ** ℕ.zero = t
-  t ** (ℕ.suc n) = t ⁎ (t ** n)
-
-  ωk : ℕ → xCL * ⊥
-  ωk ℕ.zero = S ⁎ I ⁎ I
-  ωk (ℕ.suc n) = I ⁎ (ωk n)
-  Ωk : ℕ → xCL * ⊥
-  Ωk n = ωk n ⁎ ωk n
-
-  Ω₀- : Ωk 0 ↪ S' (I) ⁎ I ⁎ (S ⁎ I ⁎ I)
-  Ω₀- = ≡-refl
-
-  Ω₀-- : S' (I) ⁎ I ⁎ (S ⁎ I ⁎ I) ↪ S'' I I ⁎ (S ⁎ I ⁎ I)
-  Ω₀-- = ≡-refl
-
-  Ω₀--- : S'' I I ⁎ (S ⁎ I ⁎ I) ↪ Ωk 1
-  Ω₀--- = ≡-refl
-
-  -- Ω₀ ->* Ω₁
-  Ω₀-Ω₁ : [ 3 ] Ωk 0 ↪k Ωk 1
-  Ω₀-Ω₁ = ≡-refl
-
-  Ω₁- : Ωk 1 ↪ S ⁎ I ⁎ I ⁎ (I ⁎ (S ⁎ I ⁎ I))
-  Ω₁- = ≡-refl
-
-  Ω₁-- : S ⁎ I ⁎ I ⁎ (I ⁎ (S ⁎ I ⁎ I)) ↪ S' (I) ⁎ I ⁎ (I ⁎ (S ⁎ I ⁎ I))
-  Ω₁-- = ≡-refl
-
-  Ω₁--- : S' (I) ⁎ I ⁎ (I ⁎ (S ⁎ I ⁎ I)) ↪ S'' (I) (I) ⁎ (I ⁎ (S ⁎ I ⁎ I))
-  Ω₁--- = ≡-refl
-
-  Ω₁---- : S'' (I) (I) ⁎ (I ⁎ (S ⁎ I ⁎ I)) ↪ Ωk 2
-  Ω₁---- = ≡-refl
-
-  -- Ω₁ ->* Ω₂
-  Ω₁-Ω₂ : [ 4 ] Ωk 1 ↪k Ωk 2
-  Ω₁-Ω₂ = ≡-refl
-
-  -- Ω₂ ->* Ω₃
-  Ω₂-Ω₃ : [ 5 ] Ωk 2 ↪k Ωk 3
-  Ω₂-Ω₃ = ≡-refl
-
+  --- Ωk ->* Ωk+1
   preI : ℕ → xCL * ⊥ → xCL * ⊥
   preI ℕ.zero t = t
   preI (ℕ.suc n) t = I ⁎ (preI n t)
 
-  It : ∀ (t : xCL * ⊥) → γ (I ⁎ t) ≡ inj₁ t
+  ωk : ℕ → xCL * ⊥
+  ωk n = preI n (S ⁎ I ⁎ I)
+  Ωk : ℕ → xCL * ⊥
+  Ωk n = ωk n ⁎ ωk n
+
+  It : ∀ (t : xCL * ⊥) → I ⁎ t ↪ t
   It t = begin 
     γ (I ⁎ t) 
       ≡⟨ ♣-comm (Initial.⊥ (μΣ xCL)) (suc (suc (suc (suc (suc (suc zero))))), I ∷ (t ∷ [])) ⟩ 
@@ -262,20 +228,35 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
     ∎
 
   preI-kstep : ∀ (k : ℕ) (t : xCL * ⊥) → [ k ] preI k t ↪k t
-  preI-kstep ℕ.zero t = {!   !} -- ≡-refl
-  -- TODO does this also just need w-comm?
-  preI-kstep (ℕ.suc k) t = {! preI-kstep k t  !}
+  preI-kstep ℕ.zero t = base↪
+  preI-kstep (ℕ.suc k) t = step↪ (It (preI k t)) (preI-kstep k t)
+
+  preI-kstep2 : ∀ (k : ℕ) (t s : xCL * ⊥) → [ k ] ((preI k t) ⁎ s) ↪k (t ⁎ s)
+  preI-kstep2 ℕ.zero t s = base↪
+  preI-kstep2 (ℕ.suc k) t s = step↪ (Eq.cong₂
+     (λ x y →
+        inj₁ (App (suc (suc (suc (suc (suc (suc zero)))))) (x ∷ y ∷ [])))
+     (inj₁-injective (It (preI k t))) (inj₁-injective (It s))) (preI-kstep2 k t s) 
 
   Ωk-kstep : ∀ (k : ℕ) → [ k ] Ωk k ↪k S ⁎ I ⁎ I ⁎ ωk k
-  Ωk-kstep ℕ.zero = ≡-refl
-  -- TODO and this?
-  Ωk-kstep (ℕ.suc k) = {!  Ωk-kstep k !} -- [ suc k ] Ωk (suc k) ↪k S ⁎ I ⁎ I ⁎ ωk (suc k)
+  Ωk-kstep k = preI-kstep2 k (S ⁎ I ⁎ I) (ωk k)
+
+  ↪k-trans : ∀ {n m : ℕ} {p q r : xCL * ⊥} → [ n ] p ↪k q → [ m ] q ↪k r → [ n + m ] p ↪k r
+  ↪k-trans .{ℕ.zero} {m} {p} .{p} {r} base↪ qr = qr
+  ↪k-trans .{ℕ.suc _} .{ℕ.zero} {p} {q} .{q} (step↪ {k} {p} {p'} pp' pq) base↪ rewrite +-identityʳ k = step↪ pp' pq
+  ↪k-trans .{ℕ.suc _} .{ℕ.suc _} {p} {q} {r} (step↪ {k} {p} {p'} pp' pq) (step↪ {t} {q} {q'} qq' qr) = step↪ pp' (↪k-trans pq (step↪ qq' qr))
+
+  ↪k-trans' : ∀ {n m : ℕ} {p q r : xCL * ⊥} → [ n ] p ↪k q → [ m ] q ↪k r → [ m + n ] p ↪k r
+  ↪k-trans' {n} {m} pq qr rewrite +-comm m n = ↪k-trans pq qr
 
   -- Ωk ->* Ωk+1
   Ωk-Ωk+1 : ∀ (k : ℕ) → [ ℕ.suc (ℕ.suc (ℕ.suc k)) ] Ωk k ↪k Ωk (ℕ.suc k)
-  Ωk-Ωk+1 ℕ.zero = ≡-refl
-  -- TODO and this?
-  Ωk-Ωk+1 (ℕ.suc k) rewrite (Ωk-kstep (ℕ.suc (ℕ.suc (ℕ.suc (ℕ.suc k))))) = {!   !}
-  -- Ωk-Ωk+1 ℕ.zero = Ω₀-Ω₁
-  -- Ωk-Ωk+1 (ℕ.suc k) = {! Ωk-Ωk+1 k  !}
-  -- Ωk-Ωk+1 (ℕ.suc k) rewrite Ωk-Ωk+1 k = {! ≡-refl  !}
+  Ωk-Ωk+1 k = ↪k-trans' {n = k} {m = 3} (Ωk-kstep k) (step↪ step₁ (step↪ step₂ (step↪ step₃ base↪)))
+    where
+      step₁ : S ⁎ I ⁎ I ⁎ ωk k ↪ S' I ⁎ I ⁎ ωk k
+      step₂ : S' I ⁎ I ⁎ ωk k ↪ S'' I I ⁎ ωk k
+      step₃ : S'' I I ⁎ ωk k ↪ Ωk (ℕ.suc k)
+      step₁ = Eq.cong (λ x → inj₁ (S' I ⁎ I ⁎ x)) (inj₁-injective (It (ωk k))) 
+      step₂ = Eq.cong (λ x → inj₁ (S'' I I ⁎ x)) (inj₁-injective (It (ωk k)))
+      step₃ = Eq.cong₂ (λ x y → inj₁ ((I ⁎ x) ⁎ (I ⁎ y))) (inj₁-injective (It (ωk k))) (inj₁-injective (It (ωk k)))
+  ---
