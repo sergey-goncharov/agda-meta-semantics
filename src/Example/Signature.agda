@@ -71,8 +71,6 @@ module Example.Signature (o : Level) where
     Var : X → Σ * X
     App : (f : Fin(ops Σ)) → Vec (Σ * X) (arts Σ !! f) → Σ * X
 
-  data _<_ {Σ : Signature} {X : Set o} : Σ * X → Σ * X → Set o where
-
   Mon-Algebra : (V : Set o) → F-Algebra (Sig-Functor Σₘₒₙ)
   Mon-Algebra V .F-Algebra.A = Σₘₒₙ * V 
   Mon-Algebra V .F-Algebra.α (op , args) = App op args

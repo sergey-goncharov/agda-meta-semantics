@@ -23,14 +23,15 @@ open import Axiom.Extensionality.Propositional using (Extensionality)
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_) renaming (refl to ≡-refl; trans to ≡-trans)
+open Eq.≡-Reasoning --using (begin_; _≡⟨_⟩_; step-≡; _∎)
 
 open import Data.Sum
 
 open import Data.Vec using (_∷_; [])
+open import Data.Vec.Properties using (map-id)
 
 module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   open Category (Agda o)
-  open HomReasoning
   open Equiv
   open import Example.Signature o renaming (lift to sig-lift)
 
@@ -252,19 +253,13 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   preI (ℕ.suc n) t = I ⁎ (preI n t)
 
   It : ∀ (t : xCL * ⊥) → γ (I ⁎ t) ≡ inj₁ t
-
-  -- This should be replaced by equaitional reasoning
-  It t = ≡-trans w (Eq.cong inj₁ ( {!lift-var ? ? t!})) 
-    where
-      w : γ (I ⁎ t) ≡ inj₁ (sig-lift xCL Data.Empty.Polymorphic.⊥ (Initial.⊥ (μΣ xCL)) (λ ()) t) -- not clear, why we have λ () in the first place 
-      w = ♣-comm (Initial.⊥ (μΣ xCL)) (suc (suc (suc (suc (suc (suc zero))))), I ∷ (t ∷ [])) 
-
-   -- It (App zero []) = ≡-refl
-  -- It (App (suc zero) []) = ≡-refl
-  -- It (App (suc (suc zero)) []) = ≡-refl
-  -- TODO this needs w-comm
-  -- It (App (suc (suc (suc zero))) (x ∷ [])) = {!!} -- Eq.cong inj₁ (Eq.sym (w-comm (Initial.⊥ (μΣ xCL)) (suc (suc (suc zero)) , {!   !} ∷ [])))
-  -- It (App (suc f) x) = {!   !}
+  It t = begin 
+    γ (I ⁎ t) 
+      ≡⟨ ♣-comm (Initial.⊥ (μΣ xCL)) (suc (suc (suc (suc (suc (suc zero))))), I ∷ (t ∷ [])) ⟩ 
+    inj₁ (sig-lift xCL ⊥ (Initial.⊥ (μΣ xCL)) (λ ()) t) 
+      ≡⟨ Eq.cong inj₁ ((IsInitial.!-unique (Initial.⊥-is-initial (μΣ xCL)) (record { f = λ x → x ; commutes = λ (op , args) → Eq.cong (λ z → App op z) (Eq.sym (map-id args)) })) t) ⟩ 
+    inj₁ t 
+    ∎
 
   preI-kstep : ∀ (k : ℕ) (t : xCL * ⊥) → [ k ] preI k t ↪k t
   preI-kstep ℕ.zero t = {!   !} -- ≡-refl
