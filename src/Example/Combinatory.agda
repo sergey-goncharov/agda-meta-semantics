@@ -218,6 +218,9 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   Ωk : ℕ → xCL * ⊥
   Ωk n = ωk n ⁎ ωk n
 
+  -- TODO implement derivation rules
+  -- TODO for next week: define record for HO-spec
+
   It : ∀ (t : xCL * ⊥) → I ⁎ t ↪ t
   It t = begin 
     γ (I ⁎ t) 
@@ -226,6 +229,18 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
       ≡⟨ Eq.cong inj₁ ((IsInitial.!-unique (Initial.⊥-is-initial (μΣ xCL)) (record { f = λ x → x ; commutes = λ (op , args) → Eq.cong (λ z → App op z) (Eq.sym (map-id args)) })) t) ⟩ 
     inj₁ t 
     ∎
+
+  St : ∀ (t : xCL * ⊥) → S ⁎ t ↪ S' t
+  St t = begin 
+    γ (S ⁎ t) 
+      ≡⟨ ♣-comm (Initial.⊥ (μΣ xCL)) (suc (suc (suc (suc (suc (suc zero))))), S ∷ (t ∷ [])) ⟩ 
+    inj₁ (sig-lift xCL ⊥ (Initial.⊥ (μΣ xCL)) (λ ()) (S' t)) 
+      ≡⟨ Eq.cong (λ x → inj₁ (S' x)) ((IsInitial.!-unique (Initial.⊥-is-initial (μΣ xCL)) (record { f = λ x → x ; commutes = λ (op , args) → Eq.cong (λ z → App op z) (Eq.sym (map-id args)) })) t) ⟩
+    inj₁ (S' t) ∎
+
+  -- TODO theorem 3.7
+  -- define coproduct as record HO-spec
+  -- derive ρ from HO-spec
 
   preI-kstep : ∀ (k : ℕ) (t : xCL * ⊥) → [ k ] preI k t ↪k t
   preI-kstep ℕ.zero t = base↪
