@@ -1,4 +1,4 @@
-{-# OPTIONS --safe --without-K #-}
+{-# OPTIONS --without-K #-}
 
 open import Level renaming (suc to ℓ-suc; zero to ℓ-zero)
 
@@ -117,8 +117,8 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   μΣ₀ = F-Algebra.A (Initial.⊥ (μΣ xCL))
 
   -- eval (single step reduction as function)
-  γ : μΣ₀ → B.₀ (μΣ₀ , μΣ₀)
-  γ = (Initial.⊥ (μΣ xCL)) ♣
+  -- γ : μΣ₀ → B.₀ (μΣ₀ , μΣ₀)
+  -- γ = (Initial.⊥ (μΣ xCL)) ♣
 
   -- Eval with fuel
   γk : ℕ → μΣ₀ → B.₀ (μΣ₀ , μΣ₀)
@@ -221,22 +221,46 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   -- TODO implement derivation rules
   -- TODO for next week: define record for HO-spec
 
-  It : ∀ (t : xCL * ⊥) → I ⁎ t ↪ t
-  It t = begin 
-    γ (I ⁎ t) 
-      ≡⟨ ♣-comm (Initial.⊥ (μΣ xCL)) (suc (suc (suc (suc (suc (suc zero))))), I ∷ (t ∷ [])) ⟩ 
-    inj₁ (sig-lift xCL ⊥ (Initial.⊥ (μΣ xCL)) (λ ()) t) 
-      ≡⟨ Eq.cong inj₁ ((IsInitial.!-unique (Initial.⊥-is-initial (μΣ xCL)) (record { f = λ x → x ; commutes = λ (op , args) → Eq.cong (λ z → App op z) (Eq.sym (map-id args)) })) t) ⟩ 
-    inj₁ t 
-    ∎
+  I-rule : ∀ (t : xCL * ⊥) → I ⁎ t ↪ t
+  I-rule t = γ-rec ((suc (suc (suc (suc (suc (suc zero)))))) , I ∷ t ∷ [])
 
-  St : ∀ (t : xCL * ⊥) → S ⁎ t ↪ S' t
-  St t = begin 
-    γ (S ⁎ t) 
-      ≡⟨ ♣-comm (Initial.⊥ (μΣ xCL)) (suc (suc (suc (suc (suc (suc zero))))), S ∷ (t ∷ [])) ⟩ 
-    inj₁ (sig-lift xCL ⊥ (Initial.⊥ (μΣ xCL)) (λ ()) (S' t)) 
-      ≡⟨ Eq.cong (λ x → inj₁ (S' x)) ((IsInitial.!-unique (Initial.⊥-is-initial (μΣ xCL)) (record { f = λ x → x ; commutes = λ (op , args) → Eq.cong (λ z → App op z) (Eq.sym (map-id args)) })) t) ⟩
-    inj₁ (S' t) ∎
+  S-rule : ∀ (t : xCL * ⊥) → S ⁎ t ↪ S' t
+  S-rule t = γ-rec ((suc (suc (suc (suc (suc (suc zero)))))) , S ∷ t ∷ [])
+
+  K-rule : ∀ (t : xCL * ⊥) → K ⁎ t ↪ K' t
+  K-rule t = γ-rec ((suc (suc (suc (suc (suc (suc zero)))))) , K ∷ t ∷ [])
+
+  S'-rule : ∀ (p t : xCL * ⊥) → S' p ⁎ t ↪ S'' p t
+  S'-rule p t = begin 
+    γ (S' p ⁎ t) 
+      ≡⟨ γ-rec ((suc (suc (suc (suc (suc (suc zero)))))) , S' p ∷ t ∷ []) ⟩ 
+    inj₁ (S'' (proj₁ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) p)) t) 
+      ≡⟨ Eq.cong (λ x → inj₁ (S'' x t)) (inj₁-injective (I-rule p)) ⟩
+    inj₁ (S'' p t) ∎
+
+  K'-rule : ∀ (p t : xCL * ⊥) → K' p ⁎ t ↪ p
+  K'-rule p t = begin 
+    γ (K' p ⁎ t) 
+      ≡⟨ γ-rec ((suc (suc (suc (suc (suc (suc zero)))))) , K' p ∷ t ∷ []) ⟩ 
+    inj₁ (proj₁ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) p)) 
+      ≡⟨ I-rule p ⟩ 
+    inj₁ p ∎
+
+  S''-rule : ∀ (p q t : xCL * ⊥) → S'' p q ⁎ t ↪ (p ⁎ t) ⁎ (q ⁎ t)
+  S''-rule p q t = begin 
+    γ (S'' p q ⁎ t) 
+      ≡⟨ γ-rec ((suc (suc (suc (suc (suc (suc zero)))))) , S'' p q ∷ t ∷ []) ⟩ 
+    inj₁ (proj₁ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) p) ⁎ t ⁎ (proj₁ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) q) ⁎ t)) 
+      ≡⟨ Eq.cong₂ (λ x y → inj₁ (x ⁎ t ⁎ (y ⁎ t))) (inj₁-injective (I-rule p)) (inj₁-injective (I-rule q)) ⟩ 
+    inj₁ ((p ⁎ t) ⁎ (q ⁎ t)) ∎
+
+  app-rule : ∀ (p p' q : xCL * ⊥) → p ↪ p' → p ⁎ q ↪ p' ⁎ q
+  app-rule p p' q pq = begin 
+    γ (p ⁎ q) 
+      ≡⟨ γ-rec ((suc (suc (suc (suc (suc (suc zero)))))) , p ∷ q ∷ []) ⟩ 
+    B.F₁ ((λ x → x) , sig-lift xCL (xCL * ⊥) (Initial.⊥ (μΣ xCL)) (λ x → x)) (B.F₁ ((λ x → x) , (sig-lift xCL ((xCL * ⊥) ⊎ (xCL * ⊥)) (Σ-Algebra (xCL * ⊥) xCL) (λ x → Var ([ (λ x₁ → x₁) , (λ x₁ → x₁) ] x)))) (Law.ρ law (xCL * ⊥) (xCL * ⊥) ((suc (suc (suc (suc (suc (suc zero)))))) , ((p , proj₂ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) p)) ∷ ((q , proj₂ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) q)) ∷ []))))) 
+      ≡⟨ Eq.cong (λ z → B.F₁ ((λ x → x) , sig-lift xCL (xCL * ⊥) (Initial.⊥ (μΣ xCL)) (λ x → x)) (B.F₁ ((λ x → x) , (sig-lift xCL ((xCL * ⊥) ⊎ (xCL * ⊥)) (Σ-Algebra (xCL * ⊥) xCL) (λ x → Var ([ (λ x₁ → x₁) , (λ x₁ → x₁) ] x)))) (Law.ρ law (xCL * ⊥) (xCL * ⊥) ((suc (suc (suc (suc (suc (suc zero)))))) , ((p , z) ∷ ((q , proj₂ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) q)) ∷ [])))))) pq ⟩ 
+    inj₁ (p' ⁎ q) ∎
 
   -- TODO theorem 3.7
   -- define coproduct as record HO-spec
@@ -244,14 +268,14 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
 
   preI-kstep : ∀ (k : ℕ) (t : xCL * ⊥) → [ k ] preI k t ↪k t
   preI-kstep ℕ.zero t = base↪
-  preI-kstep (ℕ.suc k) t = step↪ (It (preI k t)) (preI-kstep k t)
+  preI-kstep (ℕ.suc k) t = step↪ (I-rule (preI k t)) (preI-kstep k t)
 
   preI-kstep2 : ∀ (k : ℕ) (t s : xCL * ⊥) → [ k ] ((preI k t) ⁎ s) ↪k (t ⁎ s)
   preI-kstep2 ℕ.zero t s = base↪
   preI-kstep2 (ℕ.suc k) t s = step↪ (Eq.cong₂
      (λ x y →
         inj₁ (App (suc (suc (suc (suc (suc (suc zero)))))) (x ∷ y ∷ [])))
-     (inj₁-injective (It (preI k t))) (inj₁-injective (It s))) (preI-kstep2 k t s) 
+     (inj₁-injective (I-rule (preI k t))) (inj₁-injective (I-rule s))) (preI-kstep2 k t s) 
 
   Ωk-kstep : ∀ (k : ℕ) → [ k ] Ωk k ↪k S ⁎ I ⁎ I ⁎ ωk k
   Ωk-kstep k = preI-kstep2 k (S ⁎ I ⁎ I) (ωk k)
@@ -264,14 +288,14 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   ↪k-trans' : ∀ {n m : ℕ} {p q r : xCL * ⊥} → [ n ] p ↪k q → [ m ] q ↪k r → [ m + n ] p ↪k r
   ↪k-trans' {n} {m} pq qr rewrite +-comm m n = ↪k-trans pq qr
 
-  -- Ωk ->* Ωk+1
+  -- Ωk -k+3-> Ωk+1
   Ωk-Ωk+1 : ∀ (k : ℕ) → [ ℕ.suc (ℕ.suc (ℕ.suc k)) ] Ωk k ↪k Ωk (ℕ.suc k)
   Ωk-Ωk+1 k = ↪k-trans' {n = k} {m = 3} (Ωk-kstep k) (step↪ step₁ (step↪ step₂ (step↪ step₃ base↪)))
     where
       step₁ : S ⁎ I ⁎ I ⁎ ωk k ↪ S' I ⁎ I ⁎ ωk k
       step₂ : S' I ⁎ I ⁎ ωk k ↪ S'' I I ⁎ ωk k
       step₃ : S'' I I ⁎ ωk k ↪ Ωk (ℕ.suc k)
-      step₁ = Eq.cong (λ x → inj₁ (S' I ⁎ I ⁎ x)) (inj₁-injective (It (ωk k))) 
-      step₂ = Eq.cong (λ x → inj₁ (S'' I I ⁎ x)) (inj₁-injective (It (ωk k)))
-      step₃ = Eq.cong₂ (λ x y → inj₁ ((I ⁎ x) ⁎ (I ⁎ y))) (inj₁-injective (It (ωk k))) (inj₁-injective (It (ωk k)))
+      step₁ = Eq.cong (λ x → inj₁ (S' I ⁎ I ⁎ x)) (inj₁-injective (I-rule (ωk k))) 
+      step₂ = Eq.cong (λ x → inj₁ (S'' I I ⁎ x)) (inj₁-injective (I-rule (ωk k)))
+      step₃ = Eq.cong₂ (λ x y → inj₁ ((I ⁎ x) ⁎ (I ⁎ y))) (inj₁-injective (I-rule (ωk k))) (inj₁-injective (I-rule (ωk k)))
   ---

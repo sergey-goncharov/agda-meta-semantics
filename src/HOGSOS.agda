@@ -1,9 +1,9 @@
-{-# OPTIONS --safe --without-K #-}
+{-# OPTIONS --without-K --allow-unsolved-metas #-}
 
 open import Level
 open import Data.Product using (_,_)
 
-open import Categories.Category.Core
+open import Categories.Category
 open import Categories.Functor hiding (id)
 
 open import Categories.NaturalTransformation.Dinatural
@@ -66,18 +66,18 @@ module HOGSOS {o ℓ e} (C : Category o ℓ e) (cartesian : Cartesian C) (cocart
         ∇ : ∀ {A} → A + A ⇒ A
         ∇ {A} = [ id , id ]
 
-        private
-          â : ⟦ Σ*.₀ ⟦ A ⟧ ⟧ ⇒ ⟦ A ⟧
-          â = ⟪ FreeObject._* {X = ⟦ A ⟧} (freeAlgebras ⟦ A ⟧) {A = A} (id {⟦ A ⟧}) ⟫
+        -- private
+        â : ⟦ Σ*.₀ ⟦ A ⟧ ⟧ ⇒ ⟦ A ⟧
+        â = ⟪ FreeObject._* {X = ⟦ A ⟧} (freeAlgebras ⟦ A ⟧) {A = A} (id {⟦ A ⟧}) ⟫
 
-          club'-alg : F-Algebra Σ
-          club'-alg = record { A = ⟦ A ⟧ × B.₀ (⟦ A ⟧ , ⟦ A ⟧) ; α = (id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩ }
+        club'-alg : F-Algebra Σ
+        club'-alg = record { A = ⟦ A ⟧ × B.₀ (⟦ A ⟧ , ⟦ A ⟧) ; α = (id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩ }
 
-          club' : ⟦ μΣ ⟧ ⇒ (⟦ A ⟧ × B.₀ (⟦ A ⟧ , ⟦ A ⟧))
-          club' = ⟪ ! {club'-alg} ⟫
+        club' : ⟦ μΣ ⟧ ⇒ (⟦ A ⟧ × B.₀ (⟦ A ⟧ , ⟦ A ⟧))
+        club' = ⟪ ! {club'-alg} ⟫
 
-          club'-commutes : club' ∘ ι ≈ ((id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ club'
-          club'-commutes = F-Algebra-Morphism.commutes (! {club'-alg})
+        club'-commutes : club' ∘ ι ≈ ((id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ club'
+        club'-commutes = F-Algebra-Morphism.commutes (! {club'-alg})
 
         _♣ : ⟦ μΣ ⟧ ⇒ B.₀ (⟦ A ⟧ , ⟦ A ⟧)
         _♣ = π₂ ∘ club'
@@ -163,7 +163,28 @@ module HOGSOS {o ℓ e} (C : Category o ℓ e) (cartesian : Cartesian C) (cocart
       γ : ⟦ μΣ ⟧ ⇒ B.₀ (⟦ μΣ ⟧ , ⟦ μΣ ⟧)
       γ = (Initial.⊥ ini) ♣
 
-      --  ⟪ FreeObject._* {X = ⟦ A ⟧} (freeAlgebras ⟦ A ⟧) {A = A} (id {⟦ A ⟧}) ⟫
-      γ-rec : γ ∘ ι ≈ B.₁ (id ,  ⟪ ((freeAlgebras ⟦ μΣ ⟧) FreeObject.*) {!!} ⟫)  ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ ⟪ ! {μΣ} ⟫ , γ ⟩ 
-      γ-rec = {!!}
+      γ-rec : γ ∘ ι ≈ B.₁ (id , ⟪ FreeObject._* {X = ⟦ μΣ ⟧} (freeAlgebras ⟦ μΣ ⟧) {A = μΣ} (id {⟦ μΣ ⟧}) ⟫) ∘ B.₁ (id , ⟪ Σ*.₁ (∇ μΣ) ⟫) ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ id , γ ⟩
+      γ-rec = begin 
+        γ ∘ ι 
+          ≈⟨ ♣-comm μΣ ⟩ 
+        B.₁ (id , ⟪ FreeObject._* {X = ⟦ μΣ ⟧} (freeAlgebras ⟦ μΣ ⟧) {A = μΣ} (id {⟦ μΣ ⟧}) ⟫) ∘ B.₁ (id , ⟪ Σ*.₁ (∇ μΣ) ⟫) ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ ⟪ ! {μΣ} ⟫ , γ ⟩ 
+          ≈⟨ refl⟩∘⟨ (refl⟩∘⟨ (refl⟩∘⟨ (Functor.F-resp-≈ Σ (⟨⟩-cong₂ (IsInitial.!-unique (Initial.⊥-is-initial ini) (record { f = id ; commutes = identityˡ ○ introʳ (Functor.identity Σ) })) refl)))) ⟩ 
+        B.₁ (id , ⟪ FreeObject._* {X = ⟦ μΣ ⟧} (freeAlgebras ⟦ μΣ ⟧) {A = μΣ} (id {⟦ μΣ ⟧}) ⟫) ∘ B.₁ (id , ⟪ Σ*.₁ (∇ μΣ) ⟫) ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ id , γ ⟩ ∎
+
+      -- TODO: in the combinatory example the monad law just computationally reduces, so maybe simplification is not needed at this front?
+      -- γ-rec : γ ∘ ι ≈ B.₁ (id ,  ⟪ FreeObject._* {X = ⟦ μΣ ⟧ + ⟦ μΣ ⟧} (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) {A = μΣ} (∇ μΣ) ⟫)  ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ id , γ ⟩ 
+      -- γ-rec = begin 
+      --   γ ∘ ι ≈⟨ ♣-comm μΣ ⟩ 
+      --   B.₁ (id , â) ∘ B.₁ (id , ⟪ Σ*.₁ (∇ μΣ) ⟫) ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ ⟪ ! {μΣ} ⟫ , γ ⟩ 
+      --     ≈⟨ pullˡ (sym (Functor.homomorphism B) ○ Functor.F-resp-≈ B (identity² , eq)) ⟩ 
+      --   B.₁ (id ,  ⟪ FreeObject._* {X = ⟦ μΣ ⟧ + ⟦ μΣ ⟧} (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) {A = μΣ} (∇ μΣ) ⟫)  ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ ⟪ ! {μΣ} ⟫ , γ ⟩ 
+      --     ≈⟨ refl⟩∘⟨ (refl⟩∘⟨ (Functor.F-resp-≈ Σ (⟨⟩-cong₂ (IsInitial.!-unique (Initial.⊥-is-initial ini) (record { f = id ; commutes = identityˡ ○ introʳ (Functor.identity Σ) })) refl))) ⟩
+      --   B.₁ (id ,  ⟪ FreeObject._* {X = ⟦ μΣ ⟧ + ⟦ μΣ ⟧} (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) {A = μΣ} (∇ μΣ) ⟫)  ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ id , γ ⟩ ∎
+      --   where
+      --   â = ⟪ FreeObject._* {X = ⟦ μΣ ⟧} (freeAlgebras ⟦ μΣ ⟧) {A = μΣ} (id {⟦ μΣ ⟧}) ⟫
+      --   eq : â ∘ ⟪ Σ*.₁ (∇ μΣ) ⟫ ≈ ⟪ FreeObject._* {X = ⟦ μΣ ⟧ + ⟦ μΣ ⟧} (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) {A = μΣ} (∇ μΣ) ⟫
+      --   eq = FreeObject.*-uniq (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) (∇ μΣ) ((F-Algebras Σ) [ FreeObject._* {X = ⟦ μΣ ⟧} (freeAlgebras ⟦ μΣ ⟧) {A = μΣ} (id {⟦ μΣ ⟧}) ∘ Σ*.₁ (∇ μΣ) ]) helper
+      --     where
+      --     helper : (â ∘ ⟪ Σ*.₁ (∇ μΣ) ⟫) ∘ FreeObject.η (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) ≈ ∇ μΣ
+      --     helper = {!   !}
 
