@@ -116,22 +116,6 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   μΣ₀ : Set o
   μΣ₀ = F-Algebra.A (Initial.⊥ (μΣ xCL))
 
-  -- eval (single step reduction as function)
-  -- γ : μΣ₀ → B.₀ (μΣ₀ , μΣ₀)
-  -- γ = (Initial.⊥ (μΣ xCL)) ♣
-
-  -- Eval with fuel
-  γk : ℕ → μΣ₀ → B.₀ (μΣ₀ , μΣ₀)
-  γk ℕ.zero t = inj₁ t
-  γk (ℕ.suc n) t with γ t
-  ...               | inj₁ t' = γk n t'
-  ...               | inj₂ f  = inj₂ f
-
-  -- Eval with a lot of fuel (should feel like transitive-reflexive closure)
-  γ* : μΣ₀ → B.₀ (μΣ₀ , μΣ₀)
-  γ* = γk 100000
-
-
   -- helpers
   S : xCL * ⊥
   S = App zero []
@@ -162,65 +146,16 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
     base↪ : ∀ {t : xCL * ⊥} → [ ℕ.zero ] t ↪k t
     step↪ : ∀ {k : ℕ} {t t' s : xCL * ⊥} → γ t ≡ inj₁ t' → [ k ] t' ↪k s → [ ℕ.suc k ] t ↪k s
 
-  -- k-step reduction function
-  [_]_↪k'_ : ℕ → xCL * ⊥ → xCL * ⊥ → Set o
-  [ ℕ.zero ] t ↪k' s = t ≡ s
-  [ ℕ.suc n ] t ↪k' s = γk (ℕ.suc n) t ≡ inj₁ s
+  -- transitivity
+  ↪k-trans : ∀ {n m : ℕ} {p q r : xCL * ⊥} → [ n ] p ↪k q → [ m ] q ↪k r → [ n + m ] p ↪k r
+  ↪k-trans .{ℕ.zero} {m} {p} .{p} {r} base↪ qr = qr
+  ↪k-trans .{ℕ.suc _} .{ℕ.zero} {p} {q} .{q} (step↪ {k} {p} {p'} pp' pq) base↪ rewrite +-identityʳ k = step↪ pp' pq
+  ↪k-trans .{ℕ.suc _} .{ℕ.suc _} {p} {q} {r} (step↪ {k} {p} {p'} pp' pq) (step↪ {t} {q} {q'} qq' qr) = step↪ pp' (↪k-trans pq (step↪ qq' qr))
 
-  -- multi step reduction relation (only works / makes sense for irreducible terms on the right side)
-  infixr 5 _↪*_
-  _↪*_ : xCL * ⊥ → xCL * ⊥ → Set o
-  t ↪* s = γ* t ≡ γ s
-
-  ----- I I -> I
-  double-I : I ⁎ I ↪ I
-  double-I = ≡-refl
-  -----
-
-  ----- KIS ->* I
-  kis-I : K ⁎ I ⁎ S ↪* I
-  kis-I = ≡-refl
-
-  ----- ((SK)I)((KI)S) ->* I
-  skikis-I : S ⁎ K ⁎ I ⁎ (K ⁎ I ⁎ S) ↪* I
-  skikis-I = ≡-refl
-  -----
-
-  --- EXAMPLE 3.2
-  ----- SKI -> S'(K)I
-  skis'ki : ((S ⁎ K) ⁎ I) ↪ (S' K ⁎ I) 
-  skis'ki = ≡-refl
-  -----
-
-  ----- S'(K)I -> S''(K,I)
-  s'kis''ki : (S' (K) ⁎ I) ↪ S'' (K) (I)
-  s'kis''ki = ≡-refl
-  -----
-
-  ----- SKK -> S'(K)K
-  skks'kk : ((S ⁎ K) ⁎ K) ↪ (S' K ⁎ K)
-  skks'kk = ≡-refl 
-  -----
-
-  ----- S'(K)K -> S''(K,K)
-  s'kks''kk : (S' (K) ⁎ K) ↪ S'' (K) (K)
-  s'kks''kk = ≡-refl
-  -----
-  ---
-
-  --- Ωk ->* Ωk+1
-  preI : ℕ → xCL * ⊥ → xCL * ⊥
-  preI ℕ.zero t = t
-  preI (ℕ.suc n) t = I ⁎ (preI n t)
-
-  ωk : ℕ → xCL * ⊥
-  ωk n = preI n (S ⁎ I ⁎ I)
-  Ωk : ℕ → xCL * ⊥
-  Ωk n = ωk n ⁎ ωk n
-
-  -- TODO implement derivation rules
-  -- TODO for next week: define record for HO-spec
-
+  ↪k-trans' : ∀ {n m : ℕ} {p q r : xCL * ⊥} → [ n ] p ↪k q → [ m ] q ↪k r → [ m + n ] p ↪k r
+  ↪k-trans' {n} {m} pq qr rewrite +-comm m n = ↪k-trans pq qr
+  
+  -- derivation rules
   I-rule : ∀ (t : xCL * ⊥) → I ⁎ t ↪ t
   I-rule t = γ-rec ((suc (suc (suc (suc (suc (suc zero)))))) , I ∷ t ∷ [])
 
@@ -262,6 +197,62 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
       ≡⟨ Eq.cong (λ z → B.F₁ ((λ x → x) , sig-lift xCL (xCL * ⊥) (Initial.⊥ (μΣ xCL)) (λ x → x)) (B.F₁ ((λ x → x) , (sig-lift xCL ((xCL * ⊥) ⊎ (xCL * ⊥)) (Σ-Algebra (xCL * ⊥) xCL) (λ x → Var ([ (λ x₁ → x₁) , (λ x₁ → x₁) ] x)))) (Law.ρ law (xCL * ⊥) (xCL * ⊥) ((suc (suc (suc (suc (suc (suc zero)))))) , ((p , z) ∷ ((q , proj₂ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) q)) ∷ [])))))) pq ⟩ 
     inj₁ (p' ⁎ q) ∎
 
+  ----- I I -> I
+  double-I : I ⁎ I ↪ I
+  double-I = I-rule I
+  -----
+
+  ----- KIS -2-> I
+  kis-I : [ 2 ] K ⁎ I ⁎ S ↪k I
+  kis-I = step↪ (app-rule (K ⁎ I) (K' I) S (K-rule I)) 
+          (step↪ (K'-rule I S) 
+          base↪)
+  -----
+
+  ----- ((SK)I)((KI)S) -7-> I
+  skikis-I : [ 7 ] S ⁎ K ⁎ I ⁎ (K ⁎ I ⁎ S) ↪k I
+  skikis-I = step↪ (app-rule (S ⁎ K ⁎ I) (S' K ⁎ I) (K ⁎ I ⁎ S) (app-rule (S ⁎ K) (S' K) I (S-rule K))) 
+            (step↪ (app-rule (S' K ⁎ I) (S'' K I) (K ⁎ I ⁎ S) (S'-rule K I)) 
+            (step↪ (S''-rule K I (K ⁎ I ⁎ S)) 
+            (step↪ (app-rule (K ⁎ (K ⁎ I ⁎ S)) (K' (K ⁎ I ⁎ S)) (I ⁎ (K ⁎ I ⁎ S)) (K-rule (K ⁎ I ⁎ S))) 
+            (step↪ (K'-rule (K ⁎ I ⁎ S) (I ⁎ (K ⁎ I ⁎ S))) 
+            kis-I))))
+  -----
+
+  --- EXAMPLE 3.2
+  ----- SKI -> S'(K)I
+  skis'ki : ((S ⁎ K) ⁎ I) ↪ (S' K ⁎ I) 
+  skis'ki = app-rule (S ⁎ K) (S' K) I (S-rule K)
+  -----
+
+  ----- S'(K)I -> S''(K,I)
+  s'kis''ki : (S' (K) ⁎ I) ↪ S'' (K) (I)
+  s'kis''ki = S'-rule K I
+  -----
+
+  ----- SKK -> S'(K)K
+  skks'kk : ((S ⁎ K) ⁎ K) ↪ (S' K ⁎ K)
+  skks'kk = app-rule (S ⁎ K) (S' K) K (S-rule K)
+  -----
+
+  ----- S'(K)K -> S''(K,K)
+  s'kks''kk : (S' (K) ⁎ K) ↪ S'' (K) (K)
+  s'kks''kk = S'-rule K K
+  -----
+  ---
+
+  --- Ωk ->* Ωk+1
+  preI : ℕ → xCL * ⊥ → xCL * ⊥
+  preI ℕ.zero t = t
+  preI (ℕ.suc n) t = I ⁎ (preI n t)
+
+  ωk : ℕ → xCL * ⊥
+  ωk n = preI n (S ⁎ I ⁎ I)
+  Ωk : ℕ → xCL * ⊥
+  Ωk n = ωk n ⁎ ωk n
+
+  -- TODO for next week: define record for HO-spec
+
   -- TODO theorem 3.7
   -- define coproduct as record HO-spec
   -- derive ρ from HO-spec
@@ -280,15 +271,9 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   Ωk-kstep : ∀ (k : ℕ) → [ k ] Ωk k ↪k S ⁎ I ⁎ I ⁎ ωk k
   Ωk-kstep k = preI-kstep2 k (S ⁎ I ⁎ I) (ωk k)
 
-  ↪k-trans : ∀ {n m : ℕ} {p q r : xCL * ⊥} → [ n ] p ↪k q → [ m ] q ↪k r → [ n + m ] p ↪k r
-  ↪k-trans .{ℕ.zero} {m} {p} .{p} {r} base↪ qr = qr
-  ↪k-trans .{ℕ.suc _} .{ℕ.zero} {p} {q} .{q} (step↪ {k} {p} {p'} pp' pq) base↪ rewrite +-identityʳ k = step↪ pp' pq
-  ↪k-trans .{ℕ.suc _} .{ℕ.suc _} {p} {q} {r} (step↪ {k} {p} {p'} pp' pq) (step↪ {t} {q} {q'} qq' qr) = step↪ pp' (↪k-trans pq (step↪ qq' qr))
-
-  ↪k-trans' : ∀ {n m : ℕ} {p q r : xCL * ⊥} → [ n ] p ↪k q → [ m ] q ↪k r → [ m + n ] p ↪k r
-  ↪k-trans' {n} {m} pq qr rewrite +-comm m n = ↪k-trans pq qr
-
   -- Ωk -k+3-> Ωk+1
+  -- more explicitly the proof goes as follows:
+  -- Ωk ->ᵏ S ⁎ I ⁎ I ⁎ ωk -> S' I ⁎ I ⁎ ωk -> S'' I I ⁎ ωk k -> Ωk+1
   Ωk-Ωk+1 : ∀ (k : ℕ) → [ ℕ.suc (ℕ.suc (ℕ.suc k)) ] Ωk k ↪k Ωk (ℕ.suc k)
   Ωk-Ωk+1 k = ↪k-trans' {n = k} {m = 3} (Ωk-kstep k) (step↪ step₁ (step↪ step₂ (step↪ step₃ base↪)))
     where
