@@ -1,11 +1,14 @@
 {-# OPTIONS --safe --without-K #-}
 
+open import Level using () renaming (suc to ℓ-suc; zero to ℓ-zero)
+
 open import Data.Nat using (ℕ)
 open import Data.Vec as V using (Vec ; foldr ; [] ; _∷_ ; updateAt; removeAt) renaming (lookup to _!!_)
 import Data.Vec.Properties as VP
 open import Data.Vec.Relation.Binary.Equality.Propositional using (≋⇒≡; ≡⇒≋)
 open import Data.Vec.Relation.Binary.Pointwise.Inductive using (_∷_)
 open import Data.Fin.Base using (fromℕ; Fin)
+open import Data.List.Membership.Propositional
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_) renaming (refl to ≡-refl)
@@ -28,8 +31,8 @@ open F-Algebra-Morphism renaming (f to ⟪_⟫)
 open import Data.Sum
 import Data.List as List
 open List using ([]; _∷_; List)
-open import Data.Unit.Polymorphic using (tt)
-open import Data.Product using (Σ; _,_)
+open import Data.Unit.Polymorphic using (tt; ⊤)
+open import Data.Product using (_,_; Σ-syntax) renaming (Σ to Sigma)
 open import Data.Product.Properties using (Σ-≡,≡→≡)
 
 open import Level using (Level)
@@ -57,7 +60,7 @@ module Example.Signature (o : Level) where
   open ℕ
 
   Sig-Functor : Signature → Endofunctor (Agda o)
-  Sig-Functor record { ops = ops ; arts = arts } .Functor.F₀ X                                                                                  = Σ (Fin ops) (λ op → Vec X (arts !! op))
+  Sig-Functor record { ops = ops ; arts = arts } .Functor.F₀ X                                                                                  = Sigma (Fin ops) (λ op → Vec X (arts !! op))
   Sig-Functor record { ops = ops ; arts = arts } .Functor.F₁ f (op , args)                                                                      = op , V.map f args
   Sig-Functor record { ops = ops ; arts = arts } .Functor.identity {A} (op , args) rewrite VP.map-id args                                       = ≡-refl
   Sig-Functor record { ops = ops ; arts = arts } .Functor.homomorphism {f = f} {g = g} (op , args) rewrite VP.map-∘ g f args                    = ≡-refl
@@ -135,3 +138,17 @@ module Example.Signature (o : Level) where
       uniq-vec zero [] = ≡-refl
       uniq-vec (suc n) (arg ∷ args) = ≋⇒≡ (uniq arg ∷ ≡⇒≋ (uniq-vec n args))
       uniq (App op args) = Eq.trans (Eq.cong (F-Algebra.α A) (Σ-≡,≡→≡ (≡-refl , uniq-vec (arts Σ !! op) args))) (Eq.sym (F-Algebra-Morphism.commutes f (op , args)))
+
+  -- TODO record for scheme1 and scheme2?
+      
+  record HO-spec (Σ : Signature) : Set o where
+    field
+      scheme1 : ∀ (f : Fin (ops Σ)) (W : List (Fin (arts Σ !! f))) → 
+        Σ * (Level.Lift o (Fin (arts Σ !! f)) 
+          + Level.Lift o (Sigma (Fin (arts Σ !! f)) λ x → x ∈ W) 
+          + Level.Lift o (Fin (arts Σ !! f)) × Level.Lift o (Sigma (Fin (arts Σ !! f)) λ x → x ∉ W))
+      scheme2 : ∀ (f : Fin (ops Σ)) (W : List (Fin (arts Σ !! f))) → 
+        Σ * (Level.Lift o (Fin (arts Σ !! f)) 
+          + ⊤ 
+          + Level.Lift o (Sigma (Fin (arts Σ !! f)) λ x → x ∈ W) 
+          + (Level.Lift o (Fin (arts Σ !! f)) + ⊤) × Level.Lift o (Fin (arts Σ !! f)) × Level.Lift o (Sigma (Fin (arts Σ !! f)) λ x → x ∉ W))
