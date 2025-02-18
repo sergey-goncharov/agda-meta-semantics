@@ -4,11 +4,12 @@ open import Level using () renaming (suc to ℓ-suc; zero to ℓ-zero)
 
 open import Data.Nat using (ℕ)
 open import Data.Vec as V using (Vec ; foldr ; [] ; _∷_ ; updateAt; removeAt) renaming (lookup to _!!_)
+open import Data.Fin.Subset using (Subset)
 import Data.Vec.Properties as VP
 open import Data.Vec.Relation.Binary.Equality.Propositional using (≋⇒≡; ≡⇒≋)
 open import Data.Vec.Relation.Binary.Pointwise.Inductive using (_∷_)
 open import Data.Fin.Base using (fromℕ; Fin)
-open import Data.List.Membership.Propositional
+open import Data.Vec.Membership.Propositional
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_) renaming (refl to ≡-refl)
@@ -141,14 +142,16 @@ module Example.Signature (o : Level) where
 
   -- TODO record for scheme1 and scheme2?
       
-  record HO-spec (Σ : Signature) : Set o where
-    field
-      scheme1 : ∀ (f : Fin (ops Σ)) (W : List (Fin (arts Σ !! f))) → 
-        Σ * (Level.Lift o (Fin (arts Σ !! f)) 
-          + Level.Lift o (Sigma (Fin (arts Σ !! f)) λ x → x ∈ W) 
-          + Level.Lift o (Fin (arts Σ !! f)) × Level.Lift o (Sigma (Fin (arts Σ !! f)) λ x → x ∉ W))
+  data HO-progressing-vars (Σ : Signature) (f : Fin (ops Σ)) (W : Subset (arts Σ !! f)) : Set o where
+      var-orig : Level.Lift o (Fin (arts Σ !! f)) → HO-progressing-vars Σ f W
+      -- var-next : Level.Lift o (Sigma (Fin (arts Σ !! f)) λ x → x ∈ W) → HO-progressing-vars Σ f W
+      -- var-app  : Level.Lift o (Fin (arts Σ !! f)) → Level.Lift o (Sigma (Fin (arts Σ !! f)) λ x → x ∉ W) → HO-progressing-vars Σ f W
+
+{-
+  data HO-nonprogressing-vars (Σ : Signature) : Set o where
       scheme2 : ∀ (f : Fin (ops Σ)) (W : List (Fin (arts Σ !! f))) → 
         Σ * (Level.Lift o (Fin (arts Σ !! f)) 
           + ⊤ 
           + Level.Lift o (Sigma (Fin (arts Σ !! f)) λ x → x ∈ W) 
           + (Level.Lift o (Fin (arts Σ !! f)) + ⊤) × Level.Lift o (Fin (arts Σ !! f)) × Level.Lift o (Sigma (Fin (arts Σ !! f)) λ x → x ∉ W))
+-}
