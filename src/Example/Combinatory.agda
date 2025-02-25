@@ -1,16 +1,16 @@
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --without-K --allow-unsolved-metas #-}
 
-open import Level renaming (suc to ℓ-suc; zero to ℓ-zero)
+open import Level hiding (lift; Lift) renaming (suc to ℓ-suc; zero to ℓ-zero)
 
 -- The category of agda types and terminating functions.
 open import Categories.Category.Instance.Sets renaming (Sets to Agda)
 open import Category.Instance.Properties.Sets.Cartesian using () renaming (Sets-Cartesian to Agda-Cartesian)
 open import Category.Instance.Properties.Sets.Cocartesian using () renaming (Sets-Cocartesian to Agda-Cocartesian)
-open import Categories.Functor
+open import Categories.Functor hiding (id)
 open import Categories.Functor.Bifunctor
 open import Categories.Category
 open import Data.Product using (_,_; proj₁; proj₂; _×_) renaming (Σ to Sigma)
-open import Data.Fin.Base hiding (_+_)
+open import Data.Fin.Base hiding (_+_; lift)
 open import Categories.Functor.Algebra
 open import Data.Empty.Polymorphic
 open import Data.Nat.Base using (ℕ; _+_)
@@ -35,7 +35,7 @@ open import Data.Vec.Properties using (map-id)
 module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   open Category (Agda o)
   open Equiv
-  open import Example.Signature o renaming (lift to sig-lift)
+  open import Example.Signature o
 
   -- t , s ∷= S | K | I | S'(t) | K'(t) | S''(t,s) | app(t,s)
   xCL : Signature
@@ -43,6 +43,9 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
 
   Σ : Endofunctor (Agda o)
   Σ = Sig-Functor xCL
+
+  sig-lift : ∀ {V : Set o} → (V → F-Algebra.A (Initial.⊥ (μΣ xCL))) → xCL * V → F-Algebra.A (Initial.⊥ (μΣ xCL))
+  sig-lift {V} = Lift.lift xCL V (Initial.⊥ (μΣ xCL))
 
   B : Bifunctor (Category.op (Agda o)) (Agda o) (Agda o)
   B .Functor.F₀ (X , Y) = Y ⊎ (X → Y)
@@ -62,7 +65,7 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   open import HOGSOS (Agda o) (Agda-Cartesian o) (Agda-Cocartesian o) Σ B
 
   freeAlgebras : ∀ X → FreeObject {C = Agda o} {D = F-Algebras Σ} algebraForgetfulF X
-  freeAlgebras X = Σ-free xCL X
+  freeAlgebras X = Lift.Σ-free xCL X
 
   open Laws freeAlgebras
   -- helpers
@@ -109,10 +112,18 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   law .Law.dinatural f (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₁ y) ∷ (x' , _) ∷ []) = ≡-refl
   law .Law.dinatural f (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₂ g) ∷ (x' , _) ∷ []) = ≡-refl
 
-  open Clubsuit law (μΣ xCL)
+  ρ = Law.ρ law (xCL * ⊥) (xCL * ⊥)
+
+  open Clubsuit law (μΣ xCL) hiding (δ; δ-id)
 
   μΣ₀ : Set o
   μΣ₀ = F-Algebra.A (Initial.⊥ (μΣ xCL))
+
+  δ : xCL * ⊥ → xCL * ⊥
+  δ = Clubsuit.δ law (μΣ xCL) ((Initial.⊥ (μΣ xCL)))
+
+  δ-id : ∀ {t : xCL * ⊥} → δ t ≡ t
+  δ-id {t} = Clubsuit.δ-id law (μΣ xCL) t
 
   -- helpers
   S : xCL * ⊥
@@ -153,7 +164,11 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   ↪k-trans' : ∀ {n m : ℕ} {p q r : xCL * ⊥} → [ n ] p ↪k q → [ m ] q ↪k r → [ m + n ] p ↪k r
   ↪k-trans' {n} {m} pq qr rewrite +-comm m n = ↪k-trans pq qr
 
-  -- derivation rules
+{-========================================================
+  REDUCTION RULES
+  These lemmas are useful for proving reduction sequences (see end of file)
+  ========================================================-}
+
   I-rule : ∀ (t : xCL * ⊥) → I ⁎ t ↪ t
   I-rule t = γ-rec (appℕ , I ∷ t ∷ [])
 
@@ -167,33 +182,39 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   S'-rule p t = begin 
     γ (S' p ⁎ t) 
       ≡⟨ γ-rec (appℕ , S' p ∷ t ∷ []) ⟩ 
-    inj₁ (S'' (proj₁ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) p)) t) 
-      ≡⟨ Eq.cong (λ x → inj₁ (S'' x t)) (inj₁-injective (I-rule p)) ⟩
+    inj₁ (S'' (δ p) t) 
+      ≡⟨ Eq.cong (λ x → inj₁ (S'' x t)) δ-id ⟩
     inj₁ (S'' p t) ∎
 
   K'-rule : ∀ (p t : xCL * ⊥) → K' p ⁎ t ↪ p
   K'-rule p t = begin 
     γ (K' p ⁎ t) 
       ≡⟨ γ-rec (appℕ , K' p ∷ t ∷ []) ⟩ 
-    inj₁ (proj₁ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) p)) 
-      ≡⟨ I-rule p ⟩ 
+    inj₁ (δ p) 
+      ≡⟨ Eq.cong (λ x → inj₁ x) δ-id ⟩ 
     inj₁ p ∎
 
   S''-rule : ∀ (p q t : xCL * ⊥) → S'' p q ⁎ t ↪ (p ⁎ t) ⁎ (q ⁎ t)
   S''-rule p q t = begin 
     γ (S'' p q ⁎ t) 
       ≡⟨ γ-rec (appℕ , S'' p q ∷ t ∷ []) ⟩ 
-    inj₁ (proj₁ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) p) ⁎ t ⁎ (proj₁ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) q) ⁎ t)) 
-      ≡⟨ Eq.cong₂ (λ x y → inj₁ (x ⁎ t ⁎ (y ⁎ t))) (inj₁-injective (I-rule p)) (inj₁-injective (I-rule q)) ⟩ 
+    inj₁ (δ p ⁎ t ⁎ (δ q ⁎ t)) 
+      ≡⟨ Eq.cong₂ (λ x y → inj₁ (x ⁎ t ⁎ (y ⁎ t))) δ-id δ-id ⟩ 
     inj₁ ((p ⁎ t) ⁎ (q ⁎ t)) ∎
 
   app-rule : ∀ (p p' q : xCL * ⊥) → p ↪ p' → p ⁎ q ↪ p' ⁎ q
   app-rule p p' q pq = begin 
     γ (p ⁎ q) 
-      ≡⟨ γ-rec (appℕ , p ∷ q ∷ []) ⟩ 
-    B.F₁ ((λ x → x) , sig-lift xCL (xCL * ⊥) (Initial.⊥ (μΣ xCL)) (λ x → x)) (B.F₁ ((λ x → x) , (sig-lift xCL ((xCL * ⊥) ⊎ (xCL * ⊥)) (Σ-Algebra (xCL * ⊥) xCL) (λ x → Var ([ (λ x₁ → x₁) , (λ x₁ → x₁) ] x)))) (Law.ρ law (xCL * ⊥) (xCL * ⊥) (appℕ , ((p , proj₂ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) p)) ∷ ((q , proj₂ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) q)) ∷ []))))) 
-      ≡⟨ Eq.cong (λ z → B.F₁ ((λ x → x) , sig-lift xCL (xCL * ⊥) (Initial.⊥ (μΣ xCL)) (λ x → x)) (B.F₁ ((λ x → x) , (sig-lift xCL ((xCL * ⊥) ⊎ (xCL * ⊥)) (Σ-Algebra (xCL * ⊥) xCL) (λ x → Var ([ (λ x₁ → x₁) , (λ x₁ → x₁) ] x)))) (Law.ρ law (xCL * ⊥) (xCL * ⊥) (appℕ , ((p , z) ∷ ((q , proj₂ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) q)) ∷ [])))))) pq ⟩ 
+      ≡⟨ γ-rec (appℕ , p ∷ q ∷ []) ⟩
+    B.F₁ (id , sig-lift ∇) (ρ (appℕ , (p , γ p) ∷ (q , γ q) ∷ []))
+      ≡⟨ Eq.cong (λ z → B.F₁ (id , sig-lift ∇) (ρ (appℕ , (p , z) ∷ (q , γ q) ∷ []))) pq ⟩ 
     inj₁ (p' ⁎ q) ∎
+  
+{-========================================================
+  LABELLED TRANSITIONS / DERIVATION RULES
+  Here we show that γ actually implements the reduction
+  rules as defined in the paper.
+  ========================================================-}
 
   -- labelled transition
   _-[_]>_ : ∀ (p t q : xCL * ⊥) → Set o
@@ -201,35 +222,37 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   ... | inj₁ _ = ⊥
   ... | inj₂ f = f t ≡ q 
 
-  S-rule' : ∀ (t : xCL * ⊥) → S -[ t ]> S' t
-  S-rule' t = ≡-refl
+  S-rule-labeled : ∀ (t : xCL * ⊥) → S -[ t ]> S' t
+  S-rule-labeled t = ≡-refl
 
-  K-rule' : ∀ (t : xCL * ⊥) → K -[ t ]> K' t
-  K-rule' t = ≡-refl
+  K-rule-labeled : ∀ (t : xCL * ⊥) → K -[ t ]> K' t
+  K-rule-labeled t = ≡-refl
 
-  I-rule' : ∀ (t : xCL * ⊥) → I -[ t ]> t
-  I-rule' t = ≡-refl
+  I-rule-labeled : ∀ (t : xCL * ⊥) → I -[ t ]> t
+  I-rule-labeled t = ≡-refl
 
-  S'-rule' : ∀ (p q : xCL * ⊥) → S' p -[ q ]> S'' p q
-  S'-rule' p q = Eq.cong (λ x → App S''ℕ (x ∷ q ∷ [])) (inj₁-injective (I-rule p))
+  S'-rule-labeled : ∀ (p q : xCL * ⊥) → S' p -[ q ]> S'' p q
+  S'-rule-labeled p q = Eq.cong (λ x → App S''ℕ (x ∷ q ∷ [])) δ-id
 
-  K'-rule' : ∀ (p t : xCL * ⊥) → K' p -[ t ]> p
-  K'-rule' p t = inj₁-injective (I-rule p)
+  K'-rule-labeled : ∀ (p t : xCL * ⊥) → K' p -[ t ]> p
+  K'-rule-labeled p t = δ-id
 
-  S''-rule' : ∀ (p q t : xCL * ⊥) → S'' p q -[ t ]> ((p ⁎ t) ⁎ (q ⁎ t))
-  S''-rule' p q t = Eq.cong₂ (λ x y → x ⁎ t ⁎ (y ⁎ t))
-    (inj₁-injective (I-rule p)) 
-    (inj₁-injective (I-rule q))
+  S''-rule-labeled : ∀ (p q t : xCL * ⊥) → S'' p q -[ t ]> ((p ⁎ t) ⁎ (q ⁎ t))
+  S''-rule-labeled p q t = Eq.cong₂ (λ x y → x ⁎ t ⁎ (y ⁎ t)) δ-id δ-id
 
-  app-rule' : ∀ (p p' q : xCL * ⊥) → p -[ q ]> p' → p ⁎ q ↪ p'
-  app-rule' p p' q pqp' with inj₂ f ← γ p in eq = begin 
+  app-rule-labeled : ∀ (p p' q : xCL * ⊥) → p -[ q ]> p' → p ⁎ q ↪ p'
+  app-rule-labeled p p' q pqp' with inj₂ f ← γ p in eq = begin 
     γ (p ⁎ q) 
       ≡⟨ γ-rec (appℕ , p ∷ q ∷ []) ⟩ 
-    B.F₁ ((λ x → x) , sig-lift xCL (xCL * ⊥) (Initial.⊥ (μΣ xCL)) (λ x → x)) (B.F₁ ((λ x → x) , (sig-lift xCL ((xCL * ⊥) ⊎ (xCL * ⊥)) (Σ-Algebra (xCL * ⊥) xCL) (λ x → Var ([ (λ x₁ → x₁) , (λ x₁ → x₁) ] x)))) (Law.ρ law (xCL * ⊥) (xCL * ⊥) (appℕ , ((p , γ p) ∷ ((q , γ q) ∷ []))))) 
-      ≡⟨ Eq.cong (λ z → B.F₁ ((λ x → x) , sig-lift xCL (xCL * ⊥) (Initial.⊥ (μΣ xCL)) (λ x → x)) (B.F₁ ((λ x → x) , (sig-lift xCL ((xCL * ⊥) ⊎ (xCL * ⊥)) (Σ-Algebra (xCL * ⊥) xCL) (λ x → Var ([ (λ x₁ → x₁) , (λ x₁ → x₁) ] x)))) (Law.ρ law (xCL * ⊥) (xCL * ⊥) (appℕ , ((p , z) ∷ ((q , γ q) ∷ [])))))) eq ⟩ 
+    B.F₁ ((λ x → x) , sig-lift ∇) (ρ (appℕ , ((p , γ p) ∷ ((q , γ q) ∷ [])))) 
+      ≡⟨ Eq.cong (λ z → B.F₁ ((λ x → x) , sig-lift ∇) (ρ (appℕ , ((p , z) ∷ ((q , γ q) ∷ []))))) eq ⟩
     inj₁ (f q) 
       ≡⟨ Eq.cong (λ x → inj₁ x) pqp' ⟩ 
-    inj₁ p' ∎ 
+    inj₁ p' ∎
+
+{-========================================================
+  CASE STUDY: Working with k-step reduction
+  ========================================================-}
 
   ----- I I -> I
   double-I : I ⁎ I ↪ I

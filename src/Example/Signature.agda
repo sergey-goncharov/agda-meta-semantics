@@ -1,4 +1,4 @@
-{-# OPTIONS --safe --without-K #-}
+{-# OPTIONS --without-K --allow-unsolved-metas #-}
 
 open import Level using () renaming (suc to ℓ-suc; zero to ℓ-zero)
 
@@ -95,7 +95,7 @@ module Example.Signature (o : Level) where
     ; F-resp-≈ = λ eq → eq
     }
 
-  module _ (Σ : Signature) (V : Set o) where
+  module Lift (Σ : Signature) (V : Set o) where
     lift : ∀ (A : F-Algebra (Sig-Functor Σ)) (f : V → F-Algebra.A A) → Σ * V → F-Algebra.A A
     lift-vec : ∀ (A : F-Algebra (Sig-Functor Σ)) (f : V → F-Algebra.A A) → (n : ℕ) → (args : Vec (Σ * V) n) → Vec (F-Algebra.A A) n
     
@@ -131,12 +131,12 @@ module Example.Signature (o : Level) where
   μΣ : (Σ : Signature) → Initial (F-Algebras (Sig-Functor Σ))
   μΣ Σ .Initial.⊥ .F-Algebra.A = Σ * ⊥
   μΣ Σ .Initial.⊥ .F-Algebra.α (op , args) = App op args
-  μΣ Σ .Initial.⊥-is-initial .IsInitial.! {A} .F-Algebra-Morphism.f = lift Σ ⊥ A (λ ())
-  μΣ Σ .Initial.⊥-is-initial .IsInitial.! {A} .commutes (op , args) = Eq.cong (F-Algebra.α A) (Σ-≡,≡→≡ (≡-refl , lift-vec-map Σ ⊥ A (λ ()) (arts Σ !! op) args))
+  μΣ Σ .Initial.⊥-is-initial .IsInitial.! {A} .⟪_⟫ = Lift.lift Σ ⊥ A (λ ())
+  μΣ Σ .Initial.⊥-is-initial .IsInitial.! {A} .commutes (op , args) = Eq.cong (F-Algebra.α A) (Σ-≡,≡→≡ (≡-refl , Lift.lift-vec-map Σ ⊥ A (λ ()) (arts Σ !! op) args))
   μΣ Σ .Initial.⊥-is-initial .IsInitial.!-unique {A} f = uniq
     where
-      uniq : ∀ (x : Σ * ⊥) → lift Σ ⊥ A (λ ()) x ≡ ⟪ f ⟫ x
-      uniq-vec : (n : ℕ) → (args : Vec (Σ * ⊥) n) → lift-vec Σ ⊥ A (λ ()) n args ≡ V.map ⟪ f ⟫ args
+      uniq : ∀ (x : Σ * ⊥) → Lift.lift Σ ⊥ A (λ ()) x ≡ ⟪ f ⟫ x
+      uniq-vec : (n : ℕ) → (args : Vec (Σ * ⊥) n) → Lift.lift-vec Σ ⊥ A (λ ()) n args ≡ V.map ⟪ f ⟫ args
       uniq-vec zero [] = ≡-refl
       uniq-vec (suc n) (arg ∷ args) = ≋⇒≡ (uniq arg ∷ ≡⇒≋ (uniq-vec n args))
       uniq (App op args) = Eq.trans (Eq.cong (F-Algebra.α A) (Σ-≡,≡→≡ (≡-refl , uniq-vec (arts Σ !! op) args))) (Eq.sym (F-Algebra-Morphism.commutes f (op , args)))

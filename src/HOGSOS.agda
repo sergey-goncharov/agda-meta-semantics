@@ -29,6 +29,9 @@ module HOGSOS {o ℓ e} (C : Category o ℓ e) (cartesian : Cartesian C) (cocart
   open HomReasoning
   open MR C
 
+  ∇ : ∀ {A} → A + A ⇒ A
+  ∇ {A} = [ id , id ]
+
   module Σ = Functor Σ
   module B = Bifunctor B
 
@@ -62,11 +65,6 @@ module HOGSOS {o ℓ e} (C : Category o ℓ e) (cartesian : Cartesian C) (cocart
 
       module _ (A : F-Algebra Σ) where
         open F-Algebra A using () renaming (α to a)
-      
-        ∇ : ∀ {A} → A + A ⇒ A
-        ∇ {A} = [ id , id ]
-
-        -- private
         â : ⟦ Σ*.₀ ⟦ A ⟧ ⟧ ⇒ ⟦ A ⟧
         â = ⟪ FreeObject._* {X = ⟦ A ⟧} (freeAlgebras ⟦ A ⟧) {A = A} (id {⟦ A ⟧}) ⟫
 
@@ -82,38 +80,37 @@ module HOGSOS {o ℓ e} (C : Category o ℓ e) (cartesian : Cartesian C) (cocart
         _♣ : ⟦ μΣ ⟧ ⇒ B.₀ (⟦ A ⟧ , ⟦ A ⟧)
         _♣ = π₂ ∘ club'
 
-        private
-          w : ⟦ μΣ ⟧ ⇒ ⟦ A ⟧
-          w = π₁ ∘ club'
+        δ : ⟦ μΣ ⟧ ⇒ ⟦ A ⟧
+        δ = π₁ ∘ club'
+        
+        δ-comm : δ ∘ ι ≈ a ∘ Σ.₁ δ
+        δ-comm = begin 
+          δ ∘ ι
+            ≈⟨ pullʳ club'-commutes ⟩ 
+          π₁ ∘ ((id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟪ ! ⟫
+            ≈⟨ pullˡ (pullˡ (project₁ ○ identityˡ)) ⟩ 
+          (π₁ ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟪ ! ⟫
+            ≈⟨ project₁ ⟩∘⟨refl ⟩ 
+          (a ∘ Σ.₁ π₁) ∘ Σ.₁ ⟪ ! ⟫
+            ≈⟨ pullʳ (sym Σ.homomorphism) ⟩ 
+          a ∘ Σ.₁ δ
+          ∎
           
-          w-comm : w ∘ ι ≈ a ∘ Σ.₁ w
-          w-comm = begin 
-            w ∘ ι
-              ≈⟨ pullʳ club'-commutes ⟩ 
-            π₁ ∘ ((id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟪ ! ⟫
-              ≈⟨ pullˡ (pullˡ (project₁ ○ identityˡ)) ⟩ 
-            (π₁ ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟪ ! ⟫
-              ≈⟨ project₁ ⟩∘⟨refl ⟩ 
-            (a ∘ Σ.₁ π₁) ∘ Σ.₁ ⟪ ! ⟫
-              ≈⟨ pullʳ (sym Σ.homomorphism) ⟩ 
-            a ∘ Σ.₁ w
-           ∎
-           
-          w-it : ⟪ ! {A} ⟫ ≈ w
-          w-it = !-unique (record { f = w ; commutes = begin 
-            (π₁ ∘ ⟪ ! {club'-alg} ⟫) ∘ ι
-              ≈⟨ pullʳ (F-Algebra-Morphism.commutes (! {club'-alg})) ⟩
-            π₁ ∘ ((id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟪ ! {club'-alg} ⟫
-              ≈⟨ pullˡ (pullˡ project₁) ⟩
-            ((id ∘ π₁) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟪ ! {club'-alg} ⟫
-              ≈⟨ (∘-resp-≈ˡ identityˡ ○ project₁) ⟩∘⟨refl ⟩
-            (a ∘ Σ.₁ π₁) ∘ Σ.₁ ⟪ ! {club'-alg} ⟫
-              ≈⟨ pullʳ (sym Σ.homomorphism) ⟩
-            a ∘ Σ.₁ (π₁ ∘ ⟪ ! {club'-alg} ⟫)
-           ∎ })
+        δ-it : ⟪ ! {A} ⟫ ≈ δ
+        δ-it = !-unique (record { f = δ ; commutes = begin 
+          (π₁ ∘ ⟪ ! {club'-alg} ⟫) ∘ ι
+            ≈⟨ pullʳ (F-Algebra-Morphism.commutes (! {club'-alg})) ⟩
+          π₁ ∘ ((id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟪ ! {club'-alg} ⟫
+            ≈⟨ pullˡ (pullˡ project₁) ⟩
+          ((id ∘ π₁) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟪ ! {club'-alg} ⟫
+            ≈⟨ (∘-resp-≈ˡ identityˡ ○ project₁) ⟩∘⟨refl ⟩
+          (a ∘ Σ.₁ π₁) ∘ Σ.₁ ⟪ ! {club'-alg} ⟫
+            ≈⟨ pullʳ (sym Σ.homomorphism) ⟩
+          a ∘ Σ.₁ (π₁ ∘ ⟪ ! {club'-alg} ⟫)
+          ∎ })
 
-          club'≈w-club : club' ≈ ⟨ w , _♣ ⟩
-          club'≈w-club = sym g-η
+        club'≈δ-club : club' ≈ ⟨ δ , _♣ ⟩
+        club'≈δ-club = sym g-η
 
         ♣-comm : _♣ ∘ ι ≈ B.₁ (id , â) ∘ B.₁ (id , ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ∘ Σ.₁ ⟨ ⟪ ! {A} ⟫ , _♣ ⟩
         ♣-comm = begin 
@@ -124,9 +121,9 @@ module HOGSOS {o ℓ e} (C : Category o ℓ e) (cartesian : Cartesian C) (cocart
           ((B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ π₂) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟪ ! ⟫
             ≈⟨ pullʳ project₂ ⟩∘⟨refl ⟩ 
           (B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧) ∘ Σ.₁ club'
-            ≈⟨ refl⟩∘⟨ Σ.F-resp-≈ club'≈w-club ⟩ 
-          (B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧) ∘ Σ.₁ ⟨ w , _♣ ⟩
-            ≈⟨ refl⟩∘⟨ Σ.F-resp-≈ (⟨⟩-cong₂ (sym w-it) refl)⟩ 
+            ≈⟨ refl⟩∘⟨ Σ.F-resp-≈ club'≈δ-club ⟩ 
+          (B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧) ∘ Σ.₁ ⟨ δ , _♣ ⟩
+            ≈⟨ refl⟩∘⟨ Σ.F-resp-≈ (⟨⟩-cong₂ (sym δ-it) refl)⟩ 
           (B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧) ∘ Σ.₁ ⟨ ⟪ ! {A} ⟫ , _♣ ⟩
             ≈⟨ assoc ⟩
           B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ∘ Σ.₁ ⟨ ⟪ ! {A} ⟫ , _♣ ⟩
@@ -139,52 +136,56 @@ module HOGSOS {o ℓ e} (C : Category o ℓ e) (cartesian : Cartesian C) (cocart
           → f ≈ _♣
         ♣-unique f f-comm = begin 
           f              ≈˘⟨ project₂ ⟩ 
-          π₂ ∘ ⟨ w , f ⟩ ≈˘⟨ refl⟩∘⟨ !-unique (record { f = ⟨ w , f ⟩ ; commutes = helper }) ⟩ 
+          π₂ ∘ ⟨ δ , f ⟩ ≈˘⟨ refl⟩∘⟨ !-unique (record { f = ⟨ δ , f ⟩ ; commutes = helper }) ⟩ 
           π₂ ∘ club'
          ∎
           where
-          helper : ⟨ w , f ⟩ ∘ ι ≈ ((id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟨ w , f ⟩
+          helper : ⟨ δ , f ⟩ ∘ ι ≈ ((id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟨ δ , f ⟩
           helper = begin 
-            ⟨ w , f ⟩ ∘ ι
+            ⟨ δ , f ⟩ ∘ ι
               ≈⟨ ⟨⟩∘ ⟩ 
-            ⟨ w ∘ ι , f ∘ ι ⟩
-              ≈⟨ ⟨⟩-cong₂ w-comm f-comm ⟩ 
-            ⟨ a ∘ Σ.₁ w , B.₁ (id , â) ∘ B.₁ (id , ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ∘ Σ.₁ ⟨ ⟪ ! {A} ⟫ , f ⟩ ⟩
+            ⟨ δ ∘ ι , f ∘ ι ⟩
+              ≈⟨ ⟨⟩-cong₂ δ-comm f-comm ⟩ 
+            ⟨ a ∘ Σ.₁ δ , B.₁ (id , â) ∘ B.₁ (id , ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ∘ Σ.₁ ⟨ ⟪ ! {A} ⟫ , f ⟩ ⟩
               ≈⟨ ⟨⟩-cong₂ refl (pullˡ (sym B.homomorphism ○ B.F-resp-≈ (identity² , refl))) ⟩ 
-            ⟨ a ∘ Σ.₁ w , B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ∘ Σ.₁ ⟨ ⟪ ! {A} ⟫ , f ⟩ ⟩
-              ≈⟨ ⟨⟩-cong₂ refl (∘-resp-≈ʳ (∘-resp-≈ʳ (Σ.F-resp-≈ (⟨⟩-cong₂ w-it refl)))) ⟩ 
-            ⟨ a ∘ Σ.₁ w , B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ∘ Σ.₁ ⟨ w , f ⟩ ⟩
+            ⟨ a ∘ Σ.₁ δ , B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ∘ Σ.₁ ⟨ ⟪ ! {A} ⟫ , f ⟩ ⟩
+              ≈⟨ ⟨⟩-cong₂ refl (∘-resp-≈ʳ (∘-resp-≈ʳ (Σ.F-resp-≈ (⟨⟩-cong₂ δ-it refl)))) ⟩ 
+            ⟨ a ∘ Σ.₁ δ , B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ∘ Σ.₁ ⟨ δ , f ⟩ ⟩
               ≈˘⟨ ⟨⟩∘ ○ ⟨⟩-cong₂ (pullʳ (sym Σ.homomorphism ○ Σ.F-resp-≈ project₁)) assoc ⟩ 
-            ⟨ a ∘ Σ.₁ π₁ , B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ⟩ ∘ Σ.₁ ⟨ w , f ⟩
+            ⟨ a ∘ Σ.₁ π₁ , B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ A ⟧ ⟦ A ⟧ ⟩ ∘ Σ.₁ ⟨ δ , f ⟩
               ≈˘⟨ (⁂∘⟨⟩ ○ ⟨⟩-cong₂ identityˡ refl) ⟩∘⟨refl ⟩ 
-            ((id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟨ w , f ⟩
+            ((id ⁂ B.₁ (id , â ∘ ⟪ Σ*.₁ ∇ ⟫)) ∘ ⟨ a ∘ Σ.₁ π₁ , ρ ⟦ A ⟧ ⟦ A ⟧ ⟩) ∘ Σ.₁ ⟨ δ , f ⟩
            ∎
 
       γ : ⟦ μΣ ⟧ ⇒ B.₀ (⟦ μΣ ⟧ , ⟦ μΣ ⟧)
       γ = (Initial.⊥ ini) ♣
 
-      γ-rec : γ ∘ ι ≈ B.₁ (id , ⟪ FreeObject._* {X = ⟦ μΣ ⟧} (freeAlgebras ⟦ μΣ ⟧) {A = μΣ} (id {⟦ μΣ ⟧}) ⟫) ∘ B.₁ (id , ⟪ Σ*.₁ (∇ μΣ) ⟫) ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ id , γ ⟩
-      γ-rec = begin 
-        γ ∘ ι 
-          ≈⟨ ♣-comm μΣ ⟩ 
-        B.₁ (id , ⟪ FreeObject._* {X = ⟦ μΣ ⟧} (freeAlgebras ⟦ μΣ ⟧) {A = μΣ} (id {⟦ μΣ ⟧}) ⟫) ∘ B.₁ (id , ⟪ Σ*.₁ (∇ μΣ) ⟫) ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ ⟪ ! {μΣ} ⟫ , γ ⟩ 
-          ≈⟨ refl⟩∘⟨ (refl⟩∘⟨ (refl⟩∘⟨ (Functor.F-resp-≈ Σ (⟨⟩-cong₂ (IsInitial.!-unique (Initial.⊥-is-initial ini) (record { f = id ; commutes = identityˡ ○ introʳ (Functor.identity Σ) })) refl)))) ⟩ 
-        B.₁ (id , ⟪ FreeObject._* {X = ⟦ μΣ ⟧} (freeAlgebras ⟦ μΣ ⟧) {A = μΣ} (id {⟦ μΣ ⟧}) ⟫) ∘ B.₁ (id , ⟪ Σ*.₁ (∇ μΣ) ⟫) ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ id , γ ⟩ ∎
+      δ-id : δ μΣ ≈ id
+      δ-id = begin 
+        δ μΣ 
+          ≈˘⟨ δ-it μΣ ⟩ 
+        ⟪ ! {μΣ} ⟫ 
+          ≈⟨ IsInitial.!-unique (Initial.⊥-is-initial ini) (record { f = id ; commutes = identityˡ ○ introʳ (Functor.identity Σ) }) ⟩ 
+        id ∎
 
-      -- TODO: in the combinatory example the monad law just computationally reduces, so maybe simplification is not needed at this front?
-      -- γ-rec : γ ∘ ι ≈ B.₁ (id ,  ⟪ FreeObject._* {X = ⟦ μΣ ⟧ + ⟦ μΣ ⟧} (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) {A = μΣ} (∇ μΣ) ⟫) ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ id , γ ⟩ 
-      -- γ-rec = begin 
-      --   γ ∘ ι ≈⟨ ♣-comm μΣ ⟩ 
-      --   B.₁ (id , ah) ∘ B.₁ (id , ⟪ Σ*.₁ (∇ μΣ) ⟫) ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ ⟪ ! {μΣ} ⟫ , γ ⟩ 
-      --     ≈⟨ pullˡ (sym (Functor.homomorphism B) ○ Functor.F-resp-≈ B (identity² , eq)) ⟩ 
-      --   B.₁ (id ,  ⟪ FreeObject._* {X = ⟦ μΣ ⟧ + ⟦ μΣ ⟧} (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) {A = μΣ} (∇ μΣ) ⟫)  ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ ⟪ ! {μΣ} ⟫ , γ ⟩ 
-      --     ≈⟨ refl⟩∘⟨ (refl⟩∘⟨ (Functor.F-resp-≈ Σ (⟨⟩-cong₂ (IsInitial.!-unique (Initial.⊥-is-initial ini) (record { f = id ; commutes = identityˡ ○ introʳ (Functor.identity Σ) })) refl))) ⟩
-      --   B.₁ (id ,  ⟪ FreeObject._* {X = ⟦ μΣ ⟧ + ⟦ μΣ ⟧} (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) {A = μΣ} (∇ μΣ) ⟫)  ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ id , γ ⟩ ∎
-      --   where
-      --   ah = ⟪ FreeObject._* {X = ⟦ μΣ ⟧} (freeAlgebras ⟦ μΣ ⟧) {A = μΣ} (id {⟦ μΣ ⟧}) ⟫
-      --   eq : ah ∘ ⟪ Σ*.₁ (∇ μΣ) ⟫ ≈ ⟪ FreeObject._* {X = ⟦ μΣ ⟧ + ⟦ μΣ ⟧} (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) {A = μΣ} (∇ μΣ) ⟫
-      --   eq = FreeObject.*-uniq (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) (∇ μΣ) ((F-Algebras Σ) [ FreeObject._* {X = ⟦ μΣ ⟧} (freeAlgebras ⟦ μΣ ⟧) {A = μΣ} (id {⟦ μΣ ⟧}) ∘ Σ*.₁ (∇ μΣ) ]) helper
-      --     where
-      --     helper : (ah ∘ ⟪ Σ*.₁ (∇ μΣ) ⟫) ∘ FreeObject.η (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) ≈ ∇ μΣ
-      --     helper = {!   !}
+      γ-rec : γ ∘ ι ≈ B.₁ (id ,  ⟪ FreeObject._* {X = ⟦ μΣ ⟧ + ⟦ μΣ ⟧} (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) {A = μΣ} ∇ ⟫) ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ id , γ ⟩ 
+      γ-rec = begin 
+        γ ∘ ι ≈⟨ ♣-comm μΣ ⟩ 
+        B.₁ (id , ah) ∘ B.₁ (id , ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ ⟪ ! {μΣ} ⟫ , γ ⟩ 
+          ≈⟨ pullˡ (sym (Functor.homomorphism B) ○ Functor.F-resp-≈ B (identity² , eq)) ⟩ 
+        B.₁ (id ,  ⟪ FreeObject._* {X = ⟦ μΣ ⟧ + ⟦ μΣ ⟧} (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) {A = μΣ} ∇ ⟫)  ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ ⟪ ! {μΣ} ⟫ , γ ⟩ 
+          ≈⟨ refl⟩∘⟨ (refl⟩∘⟨ (Functor.F-resp-≈ Σ (⟨⟩-cong₂ (δ-it μΣ ○ δ-id) refl))) ⟩
+        B.₁ (id ,  ⟪ FreeObject._* {X = ⟦ μΣ ⟧ + ⟦ μΣ ⟧} (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) {A = μΣ} ∇ ⟫)  ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ id , γ ⟩ ∎
+        where
+        ah = ⟪ FreeObject._* {X = ⟦ μΣ ⟧} (freeAlgebras ⟦ μΣ ⟧) {A = μΣ} (id {⟦ μΣ ⟧}) ⟫
+        eq : ah ∘ ⟪ Σ*.₁ ∇ ⟫ ≈ ⟪ FreeObject._* {X = ⟦ μΣ ⟧ + ⟦ μΣ ⟧} (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) {A = μΣ} ∇ ⟫
+        eq = FreeObject.*-uniq (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) ∇ ((F-Algebras Σ) [ FreeObject._* {X = ⟦ μΣ ⟧} (freeAlgebras ⟦ μΣ ⟧) {A = μΣ} (id {⟦ μΣ ⟧}) ∘ Σ*.₁ ∇ ]) helper
+          where
+          helper : (ah ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ FreeObject.η (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) ≈ ∇
+          helper = begin 
+            (ah ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ FreeObject.η (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) 
+              ≈⟨ pullʳ (FreeObject.*-lift (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) (FreeObject.η (freeAlgebras ⟦ μΣ ⟧) ∘ ∇)) ⟩ 
+            ⟪ FreeObject._* {X = ⟦ μΣ ⟧} (freeAlgebras ⟦ μΣ ⟧) {A = μΣ} (id {⟦ μΣ ⟧}) ⟫ ∘ FreeObject.η (freeAlgebras ⟦ μΣ ⟧) ∘ ∇ 
+              ≈⟨ cancelˡ (FreeObject.*-lift (freeAlgebras ⟦ μΣ ⟧) id) ⟩ 
+            ∇ ∎
 
