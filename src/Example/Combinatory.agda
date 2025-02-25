@@ -197,51 +197,39 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
 
   -- labelled transition
   _-[_]>_ : ∀ (p t q : xCL * ⊥) → Set o
-  p -[ t ]> q = Sigma (xCL * ⊥ → xCL * ⊥) (λ f → (γ p ≡ inj₂ f) × (f t ≡ q))
+  p -[ t ]> q with γ p
+  ... | inj₁ _ = ⊥
+  ... | inj₂ f = f t ≡ q 
 
   S-rule' : ∀ (t : xCL * ⊥) → S -[ t ]> S' t
-  S-rule' t = (λ x → S' x) 
-            , ≡-refl 
-            , ≡-refl
+  S-rule' t = ≡-refl
 
   K-rule' : ∀ (t : xCL * ⊥) → K -[ t ]> K' t
-  K-rule' t = (λ x → K' x) 
-            , ≡-refl 
-            , ≡-refl
+  K-rule' t = ≡-refl
 
   I-rule' : ∀ (t : xCL * ⊥) → I -[ t ]> t
-  I-rule' t = (λ x → x) 
-            , ≡-refl 
-            , ≡-refl
+  I-rule' t = ≡-refl
 
-  S'-rule' : ∀ (p t : xCL * ⊥) → S' p -[ t ]> S'' p t
-  S'-rule' p t = (λ x → S'' p x) 
-               , Eq.cong (λ x → inj₂ x) (ext (λ x → Eq.cong (λ y → App S''ℕ (y ∷ x ∷ [])) (inj₁-injective (I-rule p))))
-               , ≡-refl
+  S'-rule' : ∀ (p q : xCL * ⊥) → S' p -[ q ]> S'' p q
+  S'-rule' p q = Eq.cong (λ x → App S''ℕ (x ∷ q ∷ [])) (inj₁-injective (I-rule p))
 
   K'-rule' : ∀ (p t : xCL * ⊥) → K' p -[ t ]> p
-  K'-rule' p t = (λ x → p) 
-                , Eq.cong (λ x → inj₂ x) (ext (λ x → inj₁-injective (I-rule p))) 
-                , ≡-refl
+  K'-rule' p t = inj₁-injective (I-rule p)
 
   S''-rule' : ∀ (p q t : xCL * ⊥) → S'' p q -[ t ]> ((p ⁎ t) ⁎ (q ⁎ t))
-  S''-rule' p q t = (λ x → (p ⁎ x) ⁎ (q ⁎ x)) 
-                  , Eq.cong (λ x → inj₂ x) (ext (λ x → Eq.cong₂
-                    (λ y z →
-                       App appℕ (App appℕ (y ∷ x ∷ []) ∷ App appℕ (z ∷ x ∷ []) ∷ []))
-                    (inj₁-injective (I-rule p)) 
-                    (inj₁-injective (I-rule q)))) 
-                  , ≡-refl
+  S''-rule' p q t = Eq.cong₂ (λ x y → x ⁎ t ⁎ (y ⁎ t))
+    (inj₁-injective (I-rule p)) 
+    (inj₁-injective (I-rule q))
 
   app-rule' : ∀ (p p' q : xCL * ⊥) → p -[ q ]> p' → p ⁎ q ↪ p'
-  app-rule' p p' q (f , eq₁ , eq₂) = begin 
+  app-rule' p p' q pqp' with inj₂ f ← γ p in eq = begin 
     γ (p ⁎ q) 
       ≡⟨ γ-rec (appℕ , p ∷ q ∷ []) ⟩ 
-    B.F₁ ((λ x → x) , sig-lift xCL (xCL * ⊥) (Initial.⊥ (μΣ xCL)) (λ x → x)) (B.F₁ ((λ x → x) , (sig-lift xCL ((xCL * ⊥) ⊎ (xCL * ⊥)) (Σ-Algebra (xCL * ⊥) xCL) (λ x → Var ([ (λ x₁ → x₁) , (λ x₁ → x₁) ] x)))) (Law.ρ law (xCL * ⊥) (xCL * ⊥) (appℕ , ((p , proj₂ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) p)) ∷ ((q , proj₂ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) q)) ∷ []))))) 
-      ≡⟨ Eq.cong (λ z → B.F₁ ((λ x → x) , sig-lift xCL (xCL * ⊥) (Initial.⊥ (μΣ xCL)) (λ x → x)) (B.F₁ ((λ x → x) , (sig-lift xCL ((xCL * ⊥) ⊎ (xCL * ⊥)) (Σ-Algebra (xCL * ⊥) xCL) (λ x → Var ([ (λ x₁ → x₁) , (λ x₁ → x₁) ] x)))) (Law.ρ law (xCL * ⊥) (xCL * ⊥) (appℕ , ((p , z) ∷ ((q , proj₂ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) q)) ∷ [])))))) eq₁ ⟩ 
-    inj₁ (f q)
-      ≡⟨ Eq.cong (λ x → inj₁ x) eq₂ ⟩
-    inj₁ p' ∎
+    B.F₁ ((λ x → x) , sig-lift xCL (xCL * ⊥) (Initial.⊥ (μΣ xCL)) (λ x → x)) (B.F₁ ((λ x → x) , (sig-lift xCL ((xCL * ⊥) ⊎ (xCL * ⊥)) (Σ-Algebra (xCL * ⊥) xCL) (λ x → Var ([ (λ x₁ → x₁) , (λ x₁ → x₁) ] x)))) (Law.ρ law (xCL * ⊥) (xCL * ⊥) (appℕ , ((p , γ p) ∷ ((q , γ q) ∷ []))))) 
+      ≡⟨ Eq.cong (λ z → B.F₁ ((λ x → x) , sig-lift xCL (xCL * ⊥) (Initial.⊥ (μΣ xCL)) (λ x → x)) (B.F₁ ((λ x → x) , (sig-lift xCL ((xCL * ⊥) ⊎ (xCL * ⊥)) (Σ-Algebra (xCL * ⊥) xCL) (λ x → Var ([ (λ x₁ → x₁) , (λ x₁ → x₁) ] x)))) (Law.ρ law (xCL * ⊥) (xCL * ⊥) (appℕ , ((p , z) ∷ ((q , γ q) ∷ [])))))) eq ⟩ 
+    inj₁ (f q) 
+      ≡⟨ Eq.cong (λ x → inj₁ x) pqp' ⟩ 
+    inj₁ p' ∎ 
 
   ----- I I -> I
   double-I : I ⁎ I ↪ I

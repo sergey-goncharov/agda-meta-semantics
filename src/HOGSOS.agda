@@ -172,19 +172,19 @@ module HOGSOS {o ℓ e} (C : Category o ℓ e) (cartesian : Cartesian C) (cocart
         B.₁ (id , ⟪ FreeObject._* {X = ⟦ μΣ ⟧} (freeAlgebras ⟦ μΣ ⟧) {A = μΣ} (id {⟦ μΣ ⟧}) ⟫) ∘ B.₁ (id , ⟪ Σ*.₁ (∇ μΣ) ⟫) ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ id , γ ⟩ ∎
 
       -- TODO: in the combinatory example the monad law just computationally reduces, so maybe simplification is not needed at this front?
-      -- γ-rec : γ ∘ ι ≈ B.₁ (id ,  ⟪ FreeObject._* {X = ⟦ μΣ ⟧ + ⟦ μΣ ⟧} (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) {A = μΣ} (∇ μΣ) ⟫)  ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ id , γ ⟩ 
+      -- γ-rec : γ ∘ ι ≈ B.₁ (id ,  ⟪ FreeObject._* {X = ⟦ μΣ ⟧ + ⟦ μΣ ⟧} (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) {A = μΣ} (∇ μΣ) ⟫) ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ id , γ ⟩ 
       -- γ-rec = begin 
       --   γ ∘ ι ≈⟨ ♣-comm μΣ ⟩ 
-      --   B.₁ (id , â) ∘ B.₁ (id , ⟪ Σ*.₁ (∇ μΣ) ⟫) ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ ⟪ ! {μΣ} ⟫ , γ ⟩ 
+      --   B.₁ (id , ah) ∘ B.₁ (id , ⟪ Σ*.₁ (∇ μΣ) ⟫) ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ ⟪ ! {μΣ} ⟫ , γ ⟩ 
       --     ≈⟨ pullˡ (sym (Functor.homomorphism B) ○ Functor.F-resp-≈ B (identity² , eq)) ⟩ 
       --   B.₁ (id ,  ⟪ FreeObject._* {X = ⟦ μΣ ⟧ + ⟦ μΣ ⟧} (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) {A = μΣ} (∇ μΣ) ⟫)  ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ ⟪ ! {μΣ} ⟫ , γ ⟩ 
       --     ≈⟨ refl⟩∘⟨ (refl⟩∘⟨ (Functor.F-resp-≈ Σ (⟨⟩-cong₂ (IsInitial.!-unique (Initial.⊥-is-initial ini) (record { f = id ; commutes = identityˡ ○ introʳ (Functor.identity Σ) })) refl))) ⟩
       --   B.₁ (id ,  ⟪ FreeObject._* {X = ⟦ μΣ ⟧ + ⟦ μΣ ⟧} (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) {A = μΣ} (∇ μΣ) ⟫)  ∘ ρ ⟦ μΣ ⟧ ⟦ μΣ ⟧ ∘ Σ.₁ ⟨ id , γ ⟩ ∎
       --   where
-      --   â = ⟪ FreeObject._* {X = ⟦ μΣ ⟧} (freeAlgebras ⟦ μΣ ⟧) {A = μΣ} (id {⟦ μΣ ⟧}) ⟫
-      --   eq : â ∘ ⟪ Σ*.₁ (∇ μΣ) ⟫ ≈ ⟪ FreeObject._* {X = ⟦ μΣ ⟧ + ⟦ μΣ ⟧} (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) {A = μΣ} (∇ μΣ) ⟫
+      --   ah = ⟪ FreeObject._* {X = ⟦ μΣ ⟧} (freeAlgebras ⟦ μΣ ⟧) {A = μΣ} (id {⟦ μΣ ⟧}) ⟫
+      --   eq : ah ∘ ⟪ Σ*.₁ (∇ μΣ) ⟫ ≈ ⟪ FreeObject._* {X = ⟦ μΣ ⟧ + ⟦ μΣ ⟧} (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) {A = μΣ} (∇ μΣ) ⟫
       --   eq = FreeObject.*-uniq (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) (∇ μΣ) ((F-Algebras Σ) [ FreeObject._* {X = ⟦ μΣ ⟧} (freeAlgebras ⟦ μΣ ⟧) {A = μΣ} (id {⟦ μΣ ⟧}) ∘ Σ*.₁ (∇ μΣ) ]) helper
       --     where
-      --     helper : (â ∘ ⟪ Σ*.₁ (∇ μΣ) ⟫) ∘ FreeObject.η (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) ≈ ∇ μΣ
+      --     helper : (ah ∘ ⟪ Σ*.₁ (∇ μΣ) ⟫) ∘ FreeObject.η (freeAlgebras (⟦ μΣ ⟧ + ⟦ μΣ ⟧)) ≈ ∇ μΣ
       --     helper = {!   !}
 
