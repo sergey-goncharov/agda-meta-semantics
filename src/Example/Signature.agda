@@ -26,10 +26,11 @@ open import Categories.Category.Core
 open import Categories.Functor.Algebra
 open import Categories.FreeObjects.Free
 open import Categories.Category.Construction.F-Algebras
+open import Data.Product.Base using () renaming (_×_ to _×⁰_)
 
 open F-Algebra-Morphism renaming (f to ⟪_⟫)
 
-open import Data.Sum
+open import Data.Sum renaming (_⊎_ to _+⁰_)
 import Data.List as List
 open List using ([]; _∷_; List)
 open import Data.Unit.Polymorphic using (tt; ⊤)
@@ -142,16 +143,21 @@ module Example.Signature (o : Level) where
 
   -- TODO record for scheme1 and scheme2?
       
-  data HO-progressing-vars (Σ : Signature) (f : Fin (ops Σ)) (W : Subset (arts Σ !! f)) : Set o where
-      var-orig : Level.Lift o (Fin (arts Σ !! f)) → HO-progressing-vars Σ f W
-      -- var-next : Level.Lift o (Sigma (Fin (arts Σ !! f)) λ x → x ∈ W) → HO-progressing-vars Σ f W
-      -- var-app  : Level.Lift o (Fin (arts Σ !! f)) → Level.Lift o (Sigma (Fin (arts Σ !! f)) λ x → x ∉ W) → HO-progressing-vars Σ f W
+  data HO-progressing-vars (Σ : Signature) (f : Fin (ops Σ)) (W : Subset (arts Σ !! f)) : Set where
+      var-orig : Fin (arts Σ !! f)     → HO-progressing-vars Σ f W
+      var-next : (Sigma _ λ x → x ∈ W) → HO-progressing-vars Σ f W
+      var-app  : Fin (arts Σ !! f)     → (Sigma _ λ x → x ∉ W) → HO-progressing-vars Σ f W
 
-{-
-  data HO-nonprogressing-vars (Σ : Signature) : Set o where
-      scheme2 : ∀ (f : Fin (ops Σ)) (W : List (Fin (arts Σ !! f))) → 
-        Σ * (Level.Lift o (Fin (arts Σ !! f)) 
-          + ⊤ 
-          + Level.Lift o (Sigma (Fin (arts Σ !! f)) λ x → x ∈ W) 
-          + (Level.Lift o (Fin (arts Σ !! f)) + ⊤) × Level.Lift o (Fin (arts Σ !! f)) × Level.Lift o (Sigma (Fin (arts Σ !! f)) λ x → x ∉ W))
--}
+  data HO-nonprogressing-vars (Σ : Signature) (f : Fin (ops Σ)) (W : Subset (arts Σ !! f)) : Set where
+    var-n-orig : Fin (arts Σ !! f) → HO-nonprogressing-vars Σ f W
+    var-q : ⊤ → HO-nonprogressing-vars Σ f W
+    var-n-next : (Sigma _ λ x → x ∈ W) → HO-nonprogressing-vars Σ f W
+    var-app : (Fin (arts Σ !! f) +⁰ ⊤) ×⁰ Fin (arts Σ !! f) ×⁰ (Sigma _ λ x → x ∉ W) → HO-nonprogressing-vars Σ f W
+
+  data HO-specification-entry (Σ : Signature) (f : Fin (ops Σ)) (W : Subset (arts Σ !! f)) : Set o where
+    progressing-rule : Σ * Level.Lift o (HO-progressing-vars Σ f W) → HO-specification-entry Σ f W
+    non-progressing-rule : Σ * Level.Lift o (HO-progressing-vars Σ f W) → HO-specification-entry Σ f W
+
+  record HO-specification : Set o where
+    field
+      rules : ∀ (Σ : Signature) (f : Fin (ops Σ)) (W : Subset (arts Σ !! f)) → HO-specification-entry Σ f W

@@ -9,7 +9,7 @@ open import Category.Instance.Properties.Sets.Cocartesian using () renaming (Set
 open import Categories.Functor
 open import Categories.Functor.Bifunctor
 open import Categories.Category
-open import Data.Product using (_,_; proj₁; proj₂)
+open import Data.Product using (_,_; proj₁; proj₂; _×_) renaming (Σ to Sigma)
 open import Data.Fin.Base hiding (_+_)
 open import Categories.Functor.Algebra
 open import Data.Empty.Polymorphic
@@ -65,51 +65,49 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   freeAlgebras X = Σ-free xCL X
 
   open Laws freeAlgebras
-  module _ where
-    private
-      -- helpers
-      S : Fin 7
-      K : Fin 7
-      I : Fin 7
-      S' : Fin 7
-      K' : Fin 7
-      S'' : Fin 7
-      app : Fin 7
-      S = zero
-      K = suc zero
-      I = suc (suc zero)
-      S' = suc (suc (suc zero))
-      K' = suc (suc (suc (suc zero)))
-      S'' = suc (suc (suc (suc (suc zero))))
-      app = suc (suc (suc (suc (suc (suc zero)))))
+  -- helpers
+  Sℕ : Fin 7
+  Kℕ : Fin 7
+  Iℕ : Fin 7
+  S'ℕ : Fin 7
+  K'ℕ : Fin 7
+  S''ℕ : Fin 7
+  appℕ : Fin 7
+  Sℕ = zero
+  Kℕ = suc zero
+  Iℕ = suc (suc zero)
+  S'ℕ = suc (suc (suc zero))
+  K'ℕ = suc (suc (suc (suc zero)))
+  S''ℕ = suc (suc (suc (suc (suc zero))))
+  appℕ = suc (suc (suc (suc (suc (suc zero)))))
 
-    law : Law
-    law .Law.ρ X Y (zero , [])                                                             = inj₂ (λ x → App S' (Var (inj₁ x) ∷ []))
-    law .Law.ρ X Y (suc zero , [])                                                         = inj₂ (λ x → App K' (Var (inj₁ x) ∷ []))
-    law .Law.ρ X Y (suc (suc zero) , [])                                                   = inj₂ (λ x → Var (inj₁ x))
-    law .Law.ρ X Y (suc (suc (suc zero)) , (x , _) ∷ [])                                   = inj₂ (λ x' → App S'' (Var (inj₁ x) ∷ Var (inj₁ x') ∷ []))
-    law .Law.ρ X Y (suc (suc (suc (suc zero))) , (x , _) ∷ [])                             = inj₂ (λ _ → Var (inj₁ x))
-    law .Law.ρ X Y (suc (suc (suc (suc (suc zero)))) , (x , _) ∷ (x' , _) ∷ [])            = inj₂ (λ x'' → App app (App app (Var (inj₁ x) ∷ Var (inj₁ x'') ∷ []) ∷ App app (Var (inj₁ x') ∷ Var (inj₁ x'') ∷ []) ∷ []))
-    law .Law.ρ X Y (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₁ y) ∷ (x' , _) ∷ []) = inj₁ (App app (Var (inj₂ y) ∷ Var (inj₁ x') ∷ []))
-    law .Law.ρ X Y (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₂ f) ∷ (x' , _) ∷ []) = inj₁ (Var (inj₂ (f x')))
+  law : Law
+  law .Law.ρ X Y (zero , [])                                                             = inj₂ (λ x → App S'ℕ (Var (inj₁ x) ∷ []))
+  law .Law.ρ X Y (suc zero , [])                                                         = inj₂ (λ x → App K'ℕ (Var (inj₁ x) ∷ []))
+  law .Law.ρ X Y (suc (suc zero) , [])                                                   = inj₂ (λ x → Var (inj₁ x))
+  law .Law.ρ X Y (suc (suc (suc zero)) , (x , _) ∷ [])                                   = inj₂ (λ x' → App S''ℕ (Var (inj₁ x) ∷ Var (inj₁ x') ∷ []))
+  law .Law.ρ X Y (suc (suc (suc (suc zero))) , (x , _) ∷ [])                             = inj₂ (λ _ → Var (inj₁ x))
+  law .Law.ρ X Y (suc (suc (suc (suc (suc zero)))) , (x , _) ∷ (x' , _) ∷ [])            = inj₂ (λ x'' → App appℕ (App appℕ (Var (inj₁ x) ∷ Var (inj₁ x'') ∷ []) ∷ App appℕ (Var (inj₁ x') ∷ Var (inj₁ x'') ∷ []) ∷ []))
+  law .Law.ρ X Y (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₁ y) ∷ (x' , _) ∷ []) = inj₁ (App appℕ (Var (inj₂ y) ∷ Var (inj₁ x') ∷ []))
+  law .Law.ρ X Y (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₂ f) ∷ (x' , _) ∷ []) = inj₁ (Var (inj₂ (f x')))
 
-    law .Law.natural f (zero , [])                                                             = ≡-refl
-    law .Law.natural f (suc zero , [])                                                         = ≡-refl
-    law .Law.natural f (suc (suc zero) , [])                                                   = ≡-refl
-    law .Law.natural f (suc (suc (suc zero)) , (x , _) ∷ [])                                   = ≡-refl
-    law .Law.natural f (suc (suc (suc (suc zero))) , (x , _) ∷ [])                             = ≡-refl
-    law .Law.natural f (suc (suc (suc (suc (suc zero)))) , (x , _) ∷ (x' , _) ∷ [])            = ≡-refl
-    law .Law.natural f (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₁ y) ∷ (x' , _) ∷ []) = ≡-refl
-    law .Law.natural f (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₂ g) ∷ (x' , _) ∷ []) = ≡-refl
+  law .Law.natural f (zero , [])                                                             = ≡-refl
+  law .Law.natural f (suc zero , [])                                                         = ≡-refl
+  law .Law.natural f (suc (suc zero) , [])                                                   = ≡-refl
+  law .Law.natural f (suc (suc (suc zero)) , (x , _) ∷ [])                                   = ≡-refl
+  law .Law.natural f (suc (suc (suc (suc zero))) , (x , _) ∷ [])                             = ≡-refl
+  law .Law.natural f (suc (suc (suc (suc (suc zero)))) , (x , _) ∷ (x' , _) ∷ [])            = ≡-refl
+  law .Law.natural f (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₁ y) ∷ (x' , _) ∷ []) = ≡-refl
+  law .Law.natural f (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₂ g) ∷ (x' , _) ∷ []) = ≡-refl
 
-    law .Law.dinatural f (zero , [])                                                             = ≡-refl
-    law .Law.dinatural f (suc zero , [])                                                         = ≡-refl
-    law .Law.dinatural f (suc (suc zero) , [])                                                   = ≡-refl
-    law .Law.dinatural f (suc (suc (suc zero)) , (x , _) ∷ [])                                   = ≡-refl
-    law .Law.dinatural f (suc (suc (suc (suc zero))) , (x , _) ∷ [])                             = ≡-refl
-    law .Law.dinatural f (suc (suc (suc (suc (suc zero)))) , (x , _) ∷ (x' , _) ∷ [])            = ≡-refl
-    law .Law.dinatural f (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₁ y) ∷ (x' , _) ∷ []) = ≡-refl
-    law .Law.dinatural f (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₂ g) ∷ (x' , _) ∷ []) = ≡-refl
+  law .Law.dinatural f (zero , [])                                                             = ≡-refl
+  law .Law.dinatural f (suc zero , [])                                                         = ≡-refl
+  law .Law.dinatural f (suc (suc zero) , [])                                                   = ≡-refl
+  law .Law.dinatural f (suc (suc (suc zero)) , (x , _) ∷ [])                                   = ≡-refl
+  law .Law.dinatural f (suc (suc (suc (suc zero))) , (x , _) ∷ [])                             = ≡-refl
+  law .Law.dinatural f (suc (suc (suc (suc (suc zero)))) , (x , _) ∷ (x' , _) ∷ [])            = ≡-refl
+  law .Law.dinatural f (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₁ y) ∷ (x' , _) ∷ []) = ≡-refl
+  law .Law.dinatural f (suc (suc (suc (suc (suc (suc zero))))) , (_ , inj₂ g) ∷ (x' , _) ∷ []) = ≡-refl
 
   open Clubsuit law (μΣ xCL)
 
@@ -118,22 +116,22 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
 
   -- helpers
   S : xCL * ⊥
-  S = App zero []
+  S = App Sℕ []
   K : xCL * ⊥
-  K = App (suc zero) []
+  K = App Kℕ []
   I : xCL * ⊥
-  I = App (suc (suc zero)) []
+  I = App Iℕ []
   S' : xCL * ⊥ → xCL * ⊥
-  S' x = App (suc (suc (suc zero))) (x ∷ [])
+  S' x = App S'ℕ (x ∷ [])
   K' : xCL * ⊥ → xCL * ⊥
-  K' x = App (suc (suc (suc (suc zero)))) (x ∷ [])
+  K' x = App K'ℕ (x ∷ [])
   S'' : xCL * ⊥ → xCL * ⊥ → xCL * ⊥
-  S'' x y = App (suc (suc (suc (suc (suc zero))))) (x ∷ y ∷ []) 
+  S'' x y = App S''ℕ (x ∷ y ∷ []) 
 
   -- application helper
   infixl 10 _⁎_
   _⁎_ : xCL * ⊥ → xCL * ⊥ → xCL * ⊥
-  t ⁎ s = App (suc (suc (suc (suc (suc (suc zero)))))) (t ∷ s ∷ [])
+  t ⁎ s = App appℕ (t ∷ s ∷ [])
 
   -- single step reduction relation
   infixr 5 _↪_
@@ -154,21 +152,21 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
 
   ↪k-trans' : ∀ {n m : ℕ} {p q r : xCL * ⊥} → [ n ] p ↪k q → [ m ] q ↪k r → [ m + n ] p ↪k r
   ↪k-trans' {n} {m} pq qr rewrite +-comm m n = ↪k-trans pq qr
-  
+
   -- derivation rules
   I-rule : ∀ (t : xCL * ⊥) → I ⁎ t ↪ t
-  I-rule t = γ-rec ((suc (suc (suc (suc (suc (suc zero)))))) , I ∷ t ∷ [])
+  I-rule t = γ-rec (appℕ , I ∷ t ∷ [])
 
   S-rule : ∀ (t : xCL * ⊥) → S ⁎ t ↪ S' t
-  S-rule t = γ-rec ((suc (suc (suc (suc (suc (suc zero)))))) , S ∷ t ∷ [])
+  S-rule t = γ-rec (appℕ , S ∷ t ∷ [])
 
   K-rule : ∀ (t : xCL * ⊥) → K ⁎ t ↪ K' t
-  K-rule t = γ-rec ((suc (suc (suc (suc (suc (suc zero)))))) , K ∷ t ∷ [])
+  K-rule t = γ-rec (appℕ , K ∷ t ∷ [])
 
   S'-rule : ∀ (p t : xCL * ⊥) → S' p ⁎ t ↪ S'' p t
   S'-rule p t = begin 
     γ (S' p ⁎ t) 
-      ≡⟨ γ-rec ((suc (suc (suc (suc (suc (suc zero)))))) , S' p ∷ t ∷ []) ⟩ 
+      ≡⟨ γ-rec (appℕ , S' p ∷ t ∷ []) ⟩ 
     inj₁ (S'' (proj₁ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) p)) t) 
       ≡⟨ Eq.cong (λ x → inj₁ (S'' x t)) (inj₁-injective (I-rule p)) ⟩
     inj₁ (S'' p t) ∎
@@ -176,7 +174,7 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   K'-rule : ∀ (p t : xCL * ⊥) → K' p ⁎ t ↪ p
   K'-rule p t = begin 
     γ (K' p ⁎ t) 
-      ≡⟨ γ-rec ((suc (suc (suc (suc (suc (suc zero)))))) , K' p ∷ t ∷ []) ⟩ 
+      ≡⟨ γ-rec (appℕ , K' p ∷ t ∷ []) ⟩ 
     inj₁ (proj₁ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) p)) 
       ≡⟨ I-rule p ⟩ 
     inj₁ p ∎
@@ -184,7 +182,7 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   S''-rule : ∀ (p q t : xCL * ⊥) → S'' p q ⁎ t ↪ (p ⁎ t) ⁎ (q ⁎ t)
   S''-rule p q t = begin 
     γ (S'' p q ⁎ t) 
-      ≡⟨ γ-rec ((suc (suc (suc (suc (suc (suc zero)))))) , S'' p q ∷ t ∷ []) ⟩ 
+      ≡⟨ γ-rec (appℕ , S'' p q ∷ t ∷ []) ⟩ 
     inj₁ (proj₁ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) p) ⁎ t ⁎ (proj₁ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) q) ⁎ t)) 
       ≡⟨ Eq.cong₂ (λ x y → inj₁ (x ⁎ t ⁎ (y ⁎ t))) (inj₁-injective (I-rule p)) (inj₁-injective (I-rule q)) ⟩ 
     inj₁ ((p ⁎ t) ⁎ (q ⁎ t)) ∎
@@ -192,10 +190,58 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   app-rule : ∀ (p p' q : xCL * ⊥) → p ↪ p' → p ⁎ q ↪ p' ⁎ q
   app-rule p p' q pq = begin 
     γ (p ⁎ q) 
-      ≡⟨ γ-rec ((suc (suc (suc (suc (suc (suc zero)))))) , p ∷ q ∷ []) ⟩ 
-    B.F₁ ((λ x → x) , sig-lift xCL (xCL * ⊥) (Initial.⊥ (μΣ xCL)) (λ x → x)) (B.F₁ ((λ x → x) , (sig-lift xCL ((xCL * ⊥) ⊎ (xCL * ⊥)) (Σ-Algebra (xCL * ⊥) xCL) (λ x → Var ([ (λ x₁ → x₁) , (λ x₁ → x₁) ] x)))) (Law.ρ law (xCL * ⊥) (xCL * ⊥) ((suc (suc (suc (suc (suc (suc zero)))))) , ((p , proj₂ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) p)) ∷ ((q , proj₂ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) q)) ∷ []))))) 
-      ≡⟨ Eq.cong (λ z → B.F₁ ((λ x → x) , sig-lift xCL (xCL * ⊥) (Initial.⊥ (μΣ xCL)) (λ x → x)) (B.F₁ ((λ x → x) , (sig-lift xCL ((xCL * ⊥) ⊎ (xCL * ⊥)) (Σ-Algebra (xCL * ⊥) xCL) (λ x → Var ([ (λ x₁ → x₁) , (λ x₁ → x₁) ] x)))) (Law.ρ law (xCL * ⊥) (xCL * ⊥) ((suc (suc (suc (suc (suc (suc zero)))))) , ((p , z) ∷ ((q , proj₂ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) q)) ∷ [])))))) pq ⟩ 
+      ≡⟨ γ-rec (appℕ , p ∷ q ∷ []) ⟩ 
+    B.F₁ ((λ x → x) , sig-lift xCL (xCL * ⊥) (Initial.⊥ (μΣ xCL)) (λ x → x)) (B.F₁ ((λ x → x) , (sig-lift xCL ((xCL * ⊥) ⊎ (xCL * ⊥)) (Σ-Algebra (xCL * ⊥) xCL) (λ x → Var ([ (λ x₁ → x₁) , (λ x₁ → x₁) ] x)))) (Law.ρ law (xCL * ⊥) (xCL * ⊥) (appℕ , ((p , proj₂ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) p)) ∷ ((q , proj₂ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) q)) ∷ []))))) 
+      ≡⟨ Eq.cong (λ z → B.F₁ ((λ x → x) , sig-lift xCL (xCL * ⊥) (Initial.⊥ (μΣ xCL)) (λ x → x)) (B.F₁ ((λ x → x) , (sig-lift xCL ((xCL * ⊥) ⊎ (xCL * ⊥)) (Σ-Algebra (xCL * ⊥) xCL) (λ x → Var ([ (λ x₁ → x₁) , (λ x₁ → x₁) ] x)))) (Law.ρ law (xCL * ⊥) (xCL * ⊥) (appℕ , ((p , z) ∷ ((q , proj₂ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) q)) ∷ [])))))) pq ⟩ 
     inj₁ (p' ⁎ q) ∎
+
+  -- labelled transition
+  _-[_]>_ : ∀ (p t q : xCL * ⊥) → Set o
+  p -[ t ]> q = Sigma (xCL * ⊥ → xCL * ⊥) (λ f → (γ p ≡ inj₂ f) × (f t ≡ q))
+
+  S-rule' : ∀ (t : xCL * ⊥) → S -[ t ]> S' t
+  S-rule' t = (λ x → S' x) 
+            , ≡-refl 
+            , ≡-refl
+
+  K-rule' : ∀ (t : xCL * ⊥) → K -[ t ]> K' t
+  K-rule' t = (λ x → K' x) 
+            , ≡-refl 
+            , ≡-refl
+
+  I-rule' : ∀ (t : xCL * ⊥) → I -[ t ]> t
+  I-rule' t = (λ x → x) 
+            , ≡-refl 
+            , ≡-refl
+
+  S'-rule' : ∀ (p t : xCL * ⊥) → S' p -[ t ]> S'' p t
+  S'-rule' p t = (λ x → S'' p x) 
+               , Eq.cong (λ x → inj₂ x) (ext (λ x → Eq.cong (λ y → App S''ℕ (y ∷ x ∷ [])) (inj₁-injective (I-rule p))))
+               , ≡-refl
+
+  K'-rule' : ∀ (p t : xCL * ⊥) → K' p -[ t ]> p
+  K'-rule' p t = (λ x → p) 
+                , Eq.cong (λ x → inj₂ x) (ext (λ x → inj₁-injective (I-rule p))) 
+                , ≡-refl
+
+  S''-rule' : ∀ (p q t : xCL * ⊥) → S'' p q -[ t ]> ((p ⁎ t) ⁎ (q ⁎ t))
+  S''-rule' p q t = (λ x → (p ⁎ x) ⁎ (q ⁎ x)) 
+                  , Eq.cong (λ x → inj₂ x) (ext (λ x → Eq.cong₂
+                    (λ y z →
+                       App appℕ (App appℕ (y ∷ x ∷ []) ∷ App appℕ (z ∷ x ∷ []) ∷ []))
+                    (inj₁-injective (I-rule p)) 
+                    (inj₁-injective (I-rule q)))) 
+                  , ≡-refl
+
+  app-rule' : ∀ (p p' q : xCL * ⊥) → p -[ q ]> p' → p ⁎ q ↪ p'
+  app-rule' p p' q (f , eq₁ , eq₂) = begin 
+    γ (p ⁎ q) 
+      ≡⟨ γ-rec (appℕ , p ∷ q ∷ []) ⟩ 
+    B.F₁ ((λ x → x) , sig-lift xCL (xCL * ⊥) (Initial.⊥ (μΣ xCL)) (λ x → x)) (B.F₁ ((λ x → x) , (sig-lift xCL ((xCL * ⊥) ⊎ (xCL * ⊥)) (Σ-Algebra (xCL * ⊥) xCL) (λ x → Var ([ (λ x₁ → x₁) , (λ x₁ → x₁) ] x)))) (Law.ρ law (xCL * ⊥) (xCL * ⊥) (appℕ , ((p , proj₂ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) p)) ∷ ((q , proj₂ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) q)) ∷ []))))) 
+      ≡⟨ Eq.cong (λ z → B.F₁ ((λ x → x) , sig-lift xCL (xCL * ⊥) (Initial.⊥ (μΣ xCL)) (λ x → x)) (B.F₁ ((λ x → x) , (sig-lift xCL ((xCL * ⊥) ⊎ (xCL * ⊥)) (Σ-Algebra (xCL * ⊥) xCL) (λ x → Var ([ (λ x₁ → x₁) , (λ x₁ → x₁) ] x)))) (Law.ρ law (xCL * ⊥) (xCL * ⊥) (appℕ , ((p , z) ∷ ((q , proj₂ (sig-lift xCL ⊥ (club'-alg (Initial.⊥ (μΣ xCL))) (λ ()) q)) ∷ [])))))) eq₁ ⟩ 
+    inj₁ (f q)
+      ≡⟨ Eq.cong (λ x → inj₁ x) eq₂ ⟩
+    inj₁ p' ∎
 
   ----- I I -> I
   double-I : I ⁎ I ↪ I
@@ -251,12 +297,6 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   Ωk : ℕ → xCL * ⊥
   Ωk n = ωk n ⁎ ωk n
 
-  -- TODO for next week: define record for HO-spec
-
-  -- TODO theorem 3.7
-  -- define coproduct as record HO-spec
-  -- derive ρ from HO-spec
-
   preI-kstep : ∀ (k : ℕ) (t : xCL * ⊥) → [ k ] preI k t ↪k t
   preI-kstep ℕ.zero t = base↪
   preI-kstep (ℕ.suc k) t = step↪ (I-rule (preI k t)) (preI-kstep k t)
@@ -265,7 +305,7 @@ module Example.Combinatory (o : Level) (ext : Extensionality o o) where
   preI-kstep2 ℕ.zero t s = base↪
   preI-kstep2 (ℕ.suc k) t s = step↪ (Eq.cong₂
      (λ x y →
-        inj₁ (App (suc (suc (suc (suc (suc (suc zero)))))) (x ∷ y ∷ [])))
+        inj₁ (App appℕ (x ∷ y ∷ [])))
      (inj₁-injective (I-rule (preI k t))) (inj₁-injective (I-rule s))) (preI-kstep2 k t s) 
 
   Ωk-kstep : ∀ (k : ℕ) → [ k ] Ωk k ↪k S ⁎ I ⁎ I ⁎ ωk k
