@@ -24,7 +24,7 @@ module HOGSOS {o ℓ e} (C : Category o ℓ e) (cartesian : Cartesian C) (cocart
   open Category C
   open Equiv
   open Cartesian cartesian
-  open BinaryProducts products renaming (_⁂_ to _×₁_)
+  open BinaryProducts products hiding (η) renaming (_⁂_ to _×₁_)
   open Cocartesian cocartesian
   open HomReasoning
   open MR C
@@ -55,18 +55,19 @@ module HOGSOS {o ℓ e} (C : Category o ℓ e) (cartesian : Cartesian C) (cocart
     record Law : Set (o ⊔ ℓ ⊔ e) where
       field
         ρ : ∀ X Y → Σ.F₀ (X × B.F₀ (X , Y)) ⇒ B.F₀ (X , ⌊ Σ*.F₀ (X + Y) ⌋)
-        natural   : ∀ {X} {Y} {Y'} (f : Y ⇒ Y') → B.₁ (id , ⟪ Σ*.₁ (id +₁ f)⟫) ∘ ρ X Y ≈ ρ X Y' ∘ Σ.₁ (id ×₁ B.₁ (id , f))
+        natural   : ∀ {X} {Y} {Y'} (f : Y ⇒ Y') → B.₁ (id , ⟪ Σ*.₁ (id +₁ f) ⟫) ∘ ρ X Y ≈ ρ X Y' ∘ Σ.₁ (id ×₁ B.₁ (id , f))
         dinatural : ∀ {X} {Y} {X'} (f : X ⇒ X') → B.₁ (id , ⟪ Σ*.₁ (f +₁ id) ⟫) ∘ ρ X Y ∘ Σ.₁ (id ×₁ B.₁ (f , id)) ≈ B.₁ (f , ⟪ Σ*.₁ (id +₁ id) ⟫) ∘ ρ X' Y ∘ Σ.₁ (f ×₁ B.₁ (id , id))
 
     module Clubsuit (law : Law) (ini : Initial (F-Algebras Σ)) where
       open Initial ini renaming (⊥ to μΣ)
       open F-Algebra μΣ using () renaming (α to ι)
       open Law law
+      open FreeObject
 
       module _ (A : F-Algebra Σ) where
         open F-Algebra A using () renaming (α to a)
         â : ⌊ Σ*.₀ ⌊ A ⌋ ⌋ ⇒ ⌊ A ⌋
-        â = ⟪ FreeObject._* {X = ⌊ A ⌋} (freeAlgebras ⌊ A ⌋) {A = A} (id {⌊ A ⌋}) ⟫
+        â = ⟪ ((freeAlgebras ⌊ A ⌋) *) {A = A} (id {⌊ A ⌋}) ⟫
 
         club'-alg : F-Algebra Σ
         club'-alg .⌊_⌋ = ⌊ A ⌋ × B.₀ (⌊ A ⌋ , ⌊ A ⌋)
@@ -169,24 +170,24 @@ module HOGSOS {o ℓ e} (C : Category o ℓ e) (cartesian : Cartesian C) (cocart
           ≈⟨ IsInitial.!-unique (Initial.⊥-is-initial ini) (record { f = id ; commutes = identityˡ ○ introʳ (Functor.identity Σ) }) ⟩ 
         id ∎
 
-      γ-rec : γ ∘ ι ≈ B.₁ (id ,  ⟪ FreeObject._* {X = ⌊ μΣ ⌋ + ⌊ μΣ ⌋} (freeAlgebras (⌊ μΣ ⌋ + ⌊ μΣ ⌋)) {A = μΣ} ∇ ⟫) ∘ ρ ⌊ μΣ ⌋ ⌊ μΣ ⌋ ∘ Σ.₁ ⟨ id , γ ⟩ 
+      γ-rec : γ ∘ ι ≈ B.₁ (id ,  ⟪ ((freeAlgebras (⌊ μΣ ⌋ + ⌊ μΣ ⌋))*) ∇ ⟫) ∘ ρ ⌊ μΣ ⌋ ⌊ μΣ ⌋ ∘ Σ.₁ ⟨ id , γ ⟩ 
       γ-rec = begin 
         γ ∘ ι ≈⟨ ♣-comm μΣ ⟩ 
         B.₁ (id , ah) ∘ B.₁ (id , ⟪ Σ*.₁ ∇ ⟫) ∘ ρ ⌊ μΣ ⌋ ⌊ μΣ ⌋ ∘ Σ.₁ ⟨ ⟪ ! {μΣ} ⟫ , γ ⟩ 
           ≈⟨ pullˡ (sym (Functor.homomorphism B) ○ Functor.F-resp-≈ B (identity² , eq)) ⟩ 
-        B.₁ (id ,  ⟪ FreeObject._* {X = ⌊ μΣ ⌋ + ⌊ μΣ ⌋} (freeAlgebras (⌊ μΣ ⌋ + ⌊ μΣ ⌋)) {A = μΣ} ∇ ⟫)  ∘ ρ ⌊ μΣ ⌋ ⌊ μΣ ⌋ ∘ Σ.₁ ⟨ ⟪ ! {μΣ} ⟫ , γ ⟩ 
+        B.₁ (id ,  ⟪ ((freeAlgebras (⌊ μΣ ⌋ + ⌊ μΣ ⌋))*) ∇ ⟫)  ∘ ρ ⌊ μΣ ⌋ ⌊ μΣ ⌋ ∘ Σ.₁ ⟨ ⟪ ! {μΣ} ⟫ , γ ⟩ 
           ≈⟨ refl⟩∘⟨ (refl⟩∘⟨ Functor.F-resp-≈ Σ (⟨⟩-cong₂ (δ-it μΣ ○ δ-id) refl)) ⟩
-        B.₁ (id ,  ⟪ FreeObject._* {X = ⌊ μΣ ⌋ + ⌊ μΣ ⌋} (freeAlgebras (⌊ μΣ ⌋ + ⌊ μΣ ⌋)) {A = μΣ} ∇ ⟫)  ∘ ρ ⌊ μΣ ⌋ ⌊ μΣ ⌋ ∘ Σ.₁ ⟨ id , γ ⟩ ∎
+        B.₁ (id ,  ⟪ ((freeAlgebras (⌊ μΣ ⌋ + ⌊ μΣ ⌋))*) ∇ ⟫)  ∘ ρ ⌊ μΣ ⌋ ⌊ μΣ ⌋ ∘ Σ.₁ ⟨ id , γ ⟩ ∎
         where
-        ah = ⟪ FreeObject._* {X = ⌊ μΣ ⌋} (freeAlgebras ⌊ μΣ ⌋) {A = μΣ} (id {⌊ μΣ ⌋}) ⟫
-        eq : ah ∘ ⟪ Σ*.₁ ∇ ⟫ ≈ ⟪ FreeObject._* {X = ⌊ μΣ ⌋ + ⌊ μΣ ⌋} (freeAlgebras (⌊ μΣ ⌋ + ⌊ μΣ ⌋)) {A = μΣ} ∇ ⟫
-        eq = FreeObject.*-uniq (freeAlgebras (⌊ μΣ ⌋ + ⌊ μΣ ⌋)) ∇ ((F-Algebras Σ) [ FreeObject._* {X = ⌊ μΣ ⌋} (freeAlgebras ⌊ μΣ ⌋) {A = μΣ} (id {⌊ μΣ ⌋}) ∘ Σ*.₁ ∇ ]) helper
+        ah = ⟪ ((freeAlgebras ⌊ μΣ ⌋)*) (id {⌊ μΣ ⌋}) ⟫
+        eq : ah ∘ ⟪ Σ*.₁ ∇ ⟫ ≈ ⟪ ((freeAlgebras (⌊ μΣ ⌋ + ⌊ μΣ ⌋))*) ∇ ⟫
+        eq = *-uniq (freeAlgebras (⌊ μΣ ⌋ + ⌊ μΣ ⌋)) ∇ ((F-Algebras Σ) [ ((freeAlgebras ⌊ μΣ ⌋)* ) (id {⌊ μΣ ⌋}) ∘ Σ*.₁ ∇ ]) helper
           where
-          helper : (ah ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ FreeObject.η (freeAlgebras (⌊ μΣ ⌋ + ⌊ μΣ ⌋)) ≈ ∇
+          helper : (ah ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ η (freeAlgebras (⌊ μΣ ⌋ + ⌊ μΣ ⌋)) ≈ ∇
           helper = begin 
-            (ah ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ FreeObject.η (freeAlgebras (⌊ μΣ ⌋ + ⌊ μΣ ⌋)) 
-              ≈⟨ pullʳ (FreeObject.*-lift (freeAlgebras (⌊ μΣ ⌋ + ⌊ μΣ ⌋)) (FreeObject.η (freeAlgebras ⌊ μΣ ⌋) ∘ ∇)) ⟩ 
-            ⟪ FreeObject._* {X = ⌊ μΣ ⌋} (freeAlgebras ⌊ μΣ ⌋) {A = μΣ} (id {⌊ μΣ ⌋}) ⟫ ∘ FreeObject.η (freeAlgebras ⌊ μΣ ⌋) ∘ ∇ 
-              ≈⟨ cancelˡ (FreeObject.*-lift (freeAlgebras ⌊ μΣ ⌋) id) ⟩ 
+            (ah ∘ ⟪ Σ*.₁ ∇ ⟫) ∘ η (freeAlgebras (⌊ μΣ ⌋ + ⌊ μΣ ⌋)) 
+              ≈⟨ pullʳ (*-lift (freeAlgebras (⌊ μΣ ⌋ + ⌊ μΣ ⌋)) (η (freeAlgebras ⌊ μΣ ⌋) ∘ ∇)) ⟩ 
+            ⟪  ((freeAlgebras ⌊ μΣ ⌋)*) (id {⌊ μΣ ⌋}) ⟫ ∘ η (freeAlgebras ⌊ μΣ ⌋) ∘ ∇ 
+              ≈⟨ cancelˡ (*-lift (freeAlgebras ⌊ μΣ ⌋) id) ⟩ 
             ∇ ∎
 
