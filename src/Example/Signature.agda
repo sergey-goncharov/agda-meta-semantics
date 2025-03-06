@@ -57,7 +57,7 @@ module Example.Signature (o : Level) where
 
       -- arities
       arts : Vec ℕ ops
-  open Signature
+  open Signature public
 
   open ℕ
 
@@ -140,24 +140,3 @@ module Example.Signature (o : Level) where
       uniq-vec zero [] = ≡-refl
       uniq-vec (suc n) (arg ∷ args) = ≋⇒≡ (uniq arg ∷ ≡⇒≋ (uniq-vec n args))
       uniq (App op args) = Eq.trans (Eq.cong (F-Algebra.α A) (Σ-≡,≡→≡ (≡-refl , uniq-vec (arts Σ !! op) args))) (Eq.sym (F-Algebra-Morphism.commutes f (op , args)))
-      
-  -- reducing rules
-  data HO-reducing (Σ : Signature) (f : Fin (ops Σ)) (W : Subset (arts Σ !! f)) : Set where
-      var-orig : Fin (arts Σ !! f)     → HO-reducing Σ f W
-      var-next : (Sigma _ λ x → x ∈ W) → HO-reducing Σ f W
-      var-app  : Fin (arts Σ !! f)     → (Sigma _ λ x → x ∉ W) → HO-reducing Σ f W
-
-  -- evaluating rules
-  data HO-evaluating (Σ : Signature) (f : Fin (ops Σ)) (W : Subset (arts Σ !! f)) : Set where
-    var-n-orig : Fin (arts Σ !! f) → HO-evaluating Σ f W
-    var-arg    : HO-evaluating Σ f W
-    var-n-next : (Sigma _ λ x → x ∈ W) → HO-evaluating Σ f W
-    var-n-app  : (Fin (arts Σ !! f) +⁰ ⊤) ×⁰ Fin (arts Σ !! f) ×⁰ (Sigma _ λ x → x ∉ W) → HO-evaluating Σ f W
-
-  data HO-specification-entry (Σ : Signature) (f : Fin (ops Σ)) (W : Subset (arts Σ !! f)) : Set o where
-    progressing-rule     : Σ * Level.Lift o (HO-reducing Σ f W) → HO-specification-entry Σ f W
-    non-progressing-rule : Σ * Level.Lift o (HO-reducing Σ f W) → HO-specification-entry Σ f W
-
-  record HO-specification : Set o where
-    field
-      rules : ∀ (Σ : Signature) (f : Fin (ops Σ)) (W : Subset (arts Σ !! f)) → HO-specification-entry Σ f W
