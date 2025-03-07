@@ -128,6 +128,14 @@ module Example.Signature (o : Level) where
     lift-var : (lift (Σ-Algebra V Σ) Var) Eq.≗ id
     lift-var t = Eq.sym ((FreeObject.*-uniq Σ-free Var (record { f = id ; commutes = λ x → Eq.cong (App (x .Data.Product.proj₁)) (Eq.sym (VP.map-id (x .Data.Product.proj₂))) }) λ _ → ≡-refl) t)
 
+  *-map : ∀ (Σ : Signature) {V W : Set o} (f : V → W) → Σ * V → Σ * W
+  *-map-vec : ∀ (Σ : Signature) {V W : Set o} (f : V → W) (n : ℕ) → Vec (Σ * V) n → Vec (Σ * W) n
+  
+  *-map Σ {V} {W} f (Var x) = Var (f x)
+  *-map Σ {V} {W} f (App g args) = App g (*-map-vec Σ f (arts Σ !! g) args)
+  *-map-vec Σ {V} {W} f zero [] = []
+  *-map-vec Σ {V} {W} f (suc n) (arg ∷ args) = (*-map Σ f arg) ∷ *-map-vec Σ f n args
+
   μΣ : (Σ : Signature) → Initial (F-Algebras (Sig-Functor Σ))
   μΣ Σ .Initial.⊥ .F-Algebra.A = Σ * ⊥
   μΣ Σ .Initial.⊥ .F-Algebra.α (op , args) = App op args

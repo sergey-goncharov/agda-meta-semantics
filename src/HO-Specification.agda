@@ -1,16 +1,16 @@
 -- Theorem 3.7
 
-open import Level
+open import Level hiding (Lift)
 open import Data.Fin.Base
-open import Data.Fin.Subset using (Subset)
+open import Data.Fin.Subset using (Subset; inside; outside)
 open import Data.Vec as V using (Vec ; foldr ; [] ; _∷_ ; updateAt; removeAt) renaming (lookup to _!!_)
 open import Data.Vec.Membership.Propositional
 open import Data.Product using (_,_; Σ-syntax) renaming (Σ to Sigma)
-open import Data.Product.Base using () renaming (_×_ to _×⁰_)
+open import Data.Product.Base using (proj₁; proj₂) renaming (_×_ to _×⁰_)
 open import Data.Sum renaming (_⊎_ to _+⁰_)
 open import Data.Unit.Polymorphic using (tt; ⊤)
 
-open import Categories.Category
+open import Categories.Category.Core
 open import Categories.Category.Instance.Sets renaming (Sets to Agda)
 open import Category.Instance.Properties.Sets.Cartesian using () renaming (Sets-Cartesian to Agda-Cartesian)
 open import Category.Instance.Properties.Sets.Cocartesian using () renaming (Sets-Cocartesian to Agda-Cocartesian)
@@ -20,16 +20,20 @@ open import Categories.Functor.Algebra
 open import Categories.Category.Construction.F-Algebras
 open import Categories.FreeObjects.Free
 
+import Relation.Binary.PropositionalEquality as Eq
+open Eq using (_≡_) renaming (refl to ≡-refl; trans to ≡-trans)
+open Eq.≡-Reasoning
 
 module HO-Specification (o : Level) where
   open import Example.Signature o
+  open Category using (op)
 
   module _ (Σ : Signature) where
     -- reducing rules
     data HO-reducing (f : Fin (ops Σ)) (W : Subset (arts Σ !! f)) : Set where
-        var-orig : Fin (arts Σ !! f)     → HO-reducing f W
-        var-next : (Sigma _ λ x → x ∈ W) → HO-reducing f W
-        var-app  : Fin (arts Σ !! f)     → (Sigma _ λ x → x ∉ W) → HO-reducing f W
+        var-orig : Fin (arts Σ !! f)     → HO-reducing f W -- proj₁
+        var-next : (Sigma _ λ x → x ∈ W) → HO-reducing f W -- proj₂ + next TODO error!! ∈ does not do whats expected!
+        var-app  : Fin (arts Σ !! f)     → (Sigma _ λ x → x ∉ W) → HO-reducing f W -- proj₂
 
     -- evaluating rules
     data HO-evaluating (f : Fin (ops Σ)) (W : Subset (arts Σ !! f)) : Set where
@@ -46,16 +50,47 @@ module HO-Specification (o : Level) where
       field
         rules : ∀ (f : Fin (ops Σ)) (W : Subset (arts Σ !! f)) → HO-specification-entry f W
     
-    B : Bifunctor (Category.op (Agda o)) (Agda o) (Agda o)
-    B = {!   !}
+    B : Bifunctor (op (Agda o)) (Agda o) (Agda o)
+    B .Functor.F₀ (X , Y) = Y +⁰ (X → Y)
+    B .Functor.F₁ {A , B} {C , D} (f , g) (inj₁ x) = inj₁ (g x)
+    B .Functor.F₁ {A , B} {C , D} (f , g) (inj₂ h) = inj₂ λ x → g (h (f x))
+    B .Functor.identity (inj₁ x) = ≡-refl
+    B .Functor.identity (inj₂ y) = ≡-refl
+    B .Functor.homomorphism (inj₁ x) = ≡-refl
+    B .Functor.homomorphism (inj₂ y) = ≡-refl
+    B .Functor.F-resp-≈ {A , B} {C , D} {f₁ , f₂} {g₁ , g₂} (f₁≈g₁ , f₂≈g₂) (inj₁ x) = Eq.cong inj₁ (f₂≈g₂ x)
+    B .Functor.F-resp-≈ {A , B} {C , D} {f₁ , f₂} {g₁ , g₂} (f₁≈g₁ , f₂≈g₂) (inj₂ h) = Eq.cong inj₂ {!   !} --(ext helper)
+      where
+      helper : ∀ (x : C) → f₂ (h (f₁ x)) ≡ g₂ (h (g₁ x))
+      helper x rewrite (f₁≈g₁ x) = f₂≈g₂ (h (g₁ x))
 
     open import HOGSOS (Agda o) (Agda-Cartesian o) (Agda-Cocartesian o) (Sig-Functor Σ) B
 
     freeAlgebras : ∀ X → FreeObject {C = Agda o} {D = F-Algebras (Sig-Functor Σ)} algebraForgetfulF X
-    freeAlgebras X = {!   !}
+    freeAlgebras X = Lift.Σ-free Σ X
 
     open Laws freeAlgebras
+    open Law
+    open HO-specification
 
-    Theorem3-7 : HO-specification → Law
-    Theorem3-7 spec = {!   !}
+    open Lift
+
+    -- W unlabeled
+    Spec⇒ρ : HO-specification → Law
+    Spec⇒ρ spec .ρ X Y (f , args) with rules spec f (V.map (λ {(_ , inj₁ _) → inside; (_ , inj₂ _) → outside }) args)
+    ...  | progressing-rule x = inj₁ (*-map Σ helper x)
+      where
+      helper : Level.Lift o (HO-reducing f _) → X +⁰ Y
+      helper (Level.lift (var-orig v)) = inj₁ (proj₁ (args !! v))
+      helper (Level.lift (var-next (outside , subs))) = inj₂ {!  subs !}
+      helper (Level.lift (var-next (inside , subs))) = inj₂ {!   !}
+      helper (Level.lift (var-app v subs)) = {!   !}
+    ...  | non-progressing-rule x = inj₂ {!   !}
+    (Spec⇒ρ spec) .natural = {!   !}
+    (Spec⇒ρ spec) .dinatural = {!   !}
+      -- record 
+      -- { ρ = λ X Y x → {!   !} 
+      -- ; natural = {!   !} 
+      -- ; dinatural = {!   !} 
+      -- }
     
