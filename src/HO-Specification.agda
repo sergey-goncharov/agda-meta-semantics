@@ -33,8 +33,8 @@ module HO-Specification (o : Level) where
     -- reducing rules
     data HO-reducing (i : Fin (ops Σ)) (W : Subset (arts Σ !! i)) : Set where
         var-orig : Fin (arts Σ !! i) → HO-reducing i W -- proj₁
-        var-next : Sigma _ (λ x → W !! x ≡ inside)    → HO-reducing i W -- proj₂ + next TODO error!! ∈ does not do whats expected!
-        var-app  : Fin (arts Σ !! i) → Sigma _ (_∉ W) → HO-reducing i W -- proj₂
+        var-next : Sigma _ (λ x → W !! x ≡ inside) → HO-reducing i W -- proj₂ + next TODO error!! ∈ does not do whats expected!
+        var-app  : Fin (arts Σ !! i) → Sigma _ (λ x → W !! x ≡ inside) → HO-reducing i W -- proj₂
 
     -- evaluating rules
     data HO-evaluating (f : Fin (ops Σ)) (W : Subset (arts Σ !! f)) : Set where
