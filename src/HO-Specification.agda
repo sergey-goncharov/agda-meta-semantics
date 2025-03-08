@@ -88,8 +88,9 @@ module HO-Specification (o : Level) where
 
       helper : Level.Lift o (HO-reducing f _) → X +⁰ Y
       helper (Level.lift (var-orig i)) = inj₁ (proj₁ (args !! i))
-      helper (Level.lift (var-next (i , i∈W))) with args !! i | ≡-trans (≡-sym (lookup-map i makeW args)) i∈W
-      ... | _ , inj₁ y | _ = inj₂ y
+      helper (Level.lift (var-next (i , i∈W))) with args !! i | V.map makeW args !! i | i∈W | lookup-map i makeW args 
+      ... | _ , inj₁ y | _ | _ | _ = inj₂ y
+      ... | _ , inj₂ _ | _ | ≡-refl | () 
 
       helper (Level.lift (var-app v subs)) = {!   !}
     ...  | non-progressing-rule x = inj₂ {!   !}
