@@ -136,6 +136,9 @@ module Example.Signature (o : Level) where
   *-map-vec Σ {V} {W} f zero [] = []
   *-map-vec Σ {V} {W} f (suc n) (arg ∷ args) = (*-map Σ f arg) ∷ *-map-vec Σ f n args
 
+  *-map-uniq : ∀ (Σ : Signature) {V W : Set o} (f : V → W) (g : Σ * V → Σ * W) → (∀ v → g (Var v) ≡ Var (f v)) → (∀ h args → g (App h args) ≡ App h (V.map g args)) → (∀ t → g t ≡ *-map Σ f t)
+  *-map-uniq Σ {V} {W} f g eq = {!   !}
+
   μΣ : (Σ : Signature) → Initial (F-Algebras (Sig-Functor Σ))
   μΣ Σ .Initial.⊥ .F-Algebra.A = Σ * ⊥
   μΣ Σ .Initial.⊥ .F-Algebra.α (op , args) = App op args
