@@ -35,9 +35,9 @@ module HO-Specification (o : Level) (ext : Extensionality o o) where
   module _ (Σ : Signature) where
     -- reducing rules
     data HO-reducing (i : Fin (ops Σ)) (W : Subset (arts Σ !! i)) : Set where
-        var-orig : Fin (arts Σ !! i) → HO-reducing i W -- proj₁
-        var-next : Sigma _ (λ x → W !! x ≡ inside) → HO-reducing i W -- proj₂ + next TODO error!! ∈ does not do whats expected!
-        var-app  : Fin (arts Σ !! i) → Sigma _ (λ x → W !! x ≡ outside) → HO-reducing i W -- proj₂
+        var-orig : Fin (arts Σ !! i) → HO-reducing i W
+        var-next : Sigma _ (λ x → W !! x ≡ inside) → HO-reducing i W
+        var-app  : Fin (arts Σ !! i) → Sigma _ (λ x → W !! x ≡ outside) → HO-reducing i W
 
     -- evaluating rules
     data HO-evaluating (f : Fin (ops Σ)) (W : Subset (arts Σ !! f)) : Set where
@@ -94,9 +94,9 @@ module HO-Specification (o : Level) (ext : Extensionality o o) where
       ... | _ , inj₁ y | _ | _ | _ = inj₂ y
       ... | _ , inj₂ _ | _ | ≡-refl | () 
 
-      helper (Level.lift (var-app v (i , i∈W))) with args !! i | V.map makeW args !! i | i∈W | lookup-map i makeW args 
-      ... | _ , inj₁ _ | _ | ≡-refl | ()
-      ... | x , inj₂ f | _ | _ | _ = inj₂ (f x)
+      helper (Level.lift (var-app v (i , i∈W))) with args !! i | V.map makeW args !! i | i∈W | lookup-map i makeW args | args !! v
+      ... | _ , inj₁ _ | _ | ≡-refl | () | _
+      ... | _ , inj₂ g | _ | _ | _ | y , _ = inj₂ (g y)
     ...  | non-progressing-rule t = inj₂ λ x → (*-map Σ (helper x) t)
       where
       helper : X → Level.Lift o (HO-evaluating f _) → X +⁰ Y
@@ -104,13 +104,16 @@ module HO-Specification (o : Level) (ext : Extensionality o o) where
       helper x (Level.lift var-arg) = inj₁ x
       helper _ (Level.lift (var-n-next (i , i∈W))) with args !! i | V.map makeW args !! i | i∈W | lookup-map i makeW args
       ... | _ , inj₁ y | _ | _ | _ = inj₂ y
-      ... | _ , inj₂ _ | _ | ≡-refl | ()       
-      helper x (Level.lift (var-n-app v (i , i∈W))) with args !! i | V.map makeW args !! i | i∈W | lookup-map i makeW args  
+      ... | _ , inj₂ _ | _ | ≡-refl | ()
+      helper x (Level.lift (var-n-app (inj₁ v) (i , i∈W))) with args !! i | V.map makeW args !! i | i∈W | lookup-map i makeW args | args !! v
+      ... | _ , inj₁ _ | _ | ≡-refl | () | _
+      ... | _ , inj₂ g | _ | _ | _ | y , _ = inj₂ (g y)
+      helper x (Level.lift (var-n-app (inj₂ tt) (i , i∈W))) with args !! i | V.map makeW args !! i | i∈W | lookup-map i makeW args
       ... | _ , inj₁ _ | _ | ≡-refl | ()
-      ... | x , inj₂ f | _ | _ | _ = inj₂ (f x)    
+      ... | _ , inj₂ g | _ | _ | _ = inj₂ (g x)
 
     Spec⇒ρ spec .natural {X} {Y} {Y'} g (f , args) with rules spec f (V.map makeW args) in eq₁ | rules spec f (V.map makeW (V.map (λ x → proj₁ x , B.F₁ ((λ x₁ → x₁) , g) (proj₂ x)) args)) in eq₂
-    ... | progressing-rule t | progressing-rule s = Eq.cong (λ r → inj₁ r) (*-map-uniq Σ _ _ helper {!   !} s)
+    ... | progressing-rule t | progressing-rule s = Eq.cong (λ r → inj₁ r) (*-map-uniq Σ _ _ helper {!    !} s)
       where
       helper : (v : Level.Lift o (HO-reducing f (V.map makeW (V.map (λ x₁ → proj₁ x₁ , B.F₁ ((λ x₂ → x₂) , g) (proj₂ x₁)) args)))) → _ ≡ _
       helper (Level.lift (var-orig x)) = {!   !}

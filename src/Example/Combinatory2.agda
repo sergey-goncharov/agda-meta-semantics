@@ -82,38 +82,6 @@ module Example.Combinatory2 (o : Level) (ext : Extensionality o o) where
   spec .HO-specification.rules (suc (suc (suc (suc zero)))) (_ ∷ []) = non-progressing-rule (Var (Level.lift (var-n-orig zero)))
   -- S''
   spec .HO-specification.rules (suc (suc (suc (suc (suc zero))))) (_ ∷ _ ∷ []) = non-progressing-rule (App appℕ (App appℕ (Var (Level.lift (var-n-orig zero)) ∷ Var (Level.lift var-arg) ∷ []) ∷ App appℕ (Var (Level.lift (var-n-orig (suc zero))) ∷ Var (Level.lift var-arg) ∷ []) ∷ [])) 
-  -- spec .HO-specification.rules (suc (suc (suc (suc (suc zero))))) (outside ∷ outside ∷ []) = non-progressing-rule 
-  --   (App appℕ 
-  --     ( Var (Level.lift (var-n-app (inj₂ tt) (zero , ≡-refl)))
-  --     ∷ Var (Level.lift (var-n-app (inj₂ tt) (suc zero , ≡-refl))) 
-  --     ∷ []))
-  -- spec .HO-specification.rules (suc (suc (suc (suc (suc zero))))) (outside ∷ inside ∷ []) = non-progressing-rule 
-  --   (App appℕ 
-  --     ( Var (Level.lift (var-n-app (inj₂ tt) (zero , ≡-refl))) 
-  --     ∷ App appℕ 
-  --         ( Var (Level.lift (var-n-orig (suc zero))) 
-  --         ∷ Var (Level.lift var-arg) 
-  --         ∷ []) 
-  --     ∷ []))
-  -- spec .HO-specification.rules (suc (suc (suc (suc (suc zero))))) (inside ∷ outside ∷ []) = non-progressing-rule 
-  --   (App appℕ 
-  --     ( App appℕ 
-  --       ( Var (Level.lift (var-n-orig zero)) 
-  --       ∷ Var (Level.lift var-arg) 
-  --       ∷ []) 
-  --     ∷ Var (Level.lift (var-n-app (inj₂ tt) (suc zero , ≡-refl))) 
-  --     ∷ []))
-  -- spec .HO-specification.rules (suc (suc (suc (suc (suc zero))))) (inside ∷ inside ∷ []) = non-progressing-rule 
-  --   (App appℕ 
-  --     ( App appℕ 
-  --       ( Var (Level.lift (var-n-orig zero)) 
-  --       ∷ Var (Level.lift var-arg) 
-  --       ∷ []) 
-  --     ∷ App appℕ 
-  --       ( Var (Level.lift (var-n-orig (suc zero))) 
-  --       ∷ Var (Level.lift var-arg) 
-  --       ∷ []) 
-  --     ∷ []))
   -- app
   spec .HO-specification.rules (suc (suc (suc (suc (suc (suc zero)))))) (outside ∷ _ ∷ []) = progressing-rule (Var (Level.lift (var-app (suc zero) (zero , ≡-refl))))
   spec .HO-specification.rules (suc (suc (suc (suc (suc (suc zero)))))) (inside ∷ _ ∷ []) = progressing-rule 
@@ -124,10 +92,6 @@ module Example.Combinatory2 (o : Level) (ext : Extensionality o o) where
 
   law : Law
   law = Spec⇒ρ xCL spec
-
-
-
-
 
   ρ = Law.ρ law (xCL * ⊥) (xCL * ⊥)
 
@@ -187,53 +151,53 @@ module Example.Combinatory2 (o : Level) (ext : Extensionality o o) where
   ========================================================-}
 
   I-rule : ∀ (t : xCL * ⊥) → I ⁎ t -[]> t
-  I-rule t = {!   !} -- γ-rec (appℕ , I ∷ t ∷ [])
+  I-rule t = γ-rec (appℕ , I ∷ t ∷ [])
 
-  -- S-rule : ∀ (t : xCL * ⊥) → S ⁎ t -[]> S' t
-  -- S-rule t = γ-rec (appℕ , S ∷ t ∷ [])
+  S-rule : ∀ (t : xCL * ⊥) → S ⁎ t -[]> S' t
+  S-rule t = γ-rec (appℕ , S ∷ t ∷ [])
 
-  -- K-rule : ∀ (t : xCL * ⊥) → K ⁎ t -[]> K' t
-  -- K-rule t = γ-rec (appℕ , K ∷ t ∷ [])
+  K-rule : ∀ (t : xCL * ⊥) → K ⁎ t -[]> K' t
+  K-rule t = γ-rec (appℕ , K ∷ t ∷ [])
 
---   S'-rule : ∀ (p t : xCL * ⊥) → S' p ⁎ t -[]> S'' p t
---   S'-rule p t = begin 
---     γ (S' p ⁎ t) 
---       ≡⟨ γ-rec (appℕ , S' p ∷ t ∷ []) ⟩ 
---     inj₁ (S'' (δ p) t) 
---       ≡⟨ Eq.cong (λ x → inj₁ (S'' x t)) δ-id ⟩
---     inj₁ (S'' p t) ∎
+  S'-rule : ∀ (p t : xCL * ⊥) → S' p ⁎ t -[]> S'' p t
+  S'-rule p t = begin 
+    γ (S' p ⁎ t) 
+      ≡⟨ γ-rec (appℕ , S' p ∷ t ∷ []) ⟩ 
+    inj₁ (S'' (δ p) t) 
+      ≡⟨ Eq.cong (λ x → inj₁ (S'' x t)) δ-id ⟩
+    inj₁ (S'' p t) ∎
 
---   K'-rule : ∀ (p t : xCL * ⊥) → K' p ⁎ t -[]> p
---   K'-rule p t = begin 
---     γ (K' p ⁎ t) 
---       ≡⟨ γ-rec (appℕ , K' p ∷ t ∷ []) ⟩ 
---     inj₁ (δ p) 
---       ≡⟨ Eq.cong (λ x → inj₁ x) δ-id ⟩ 
---     inj₁ p ∎
+  K'-rule : ∀ (p t : xCL * ⊥) → K' p ⁎ t -[]> p
+  K'-rule p t = begin 
+    γ (K' p ⁎ t) 
+      ≡⟨ γ-rec (appℕ , K' p ∷ t ∷ []) ⟩ 
+    inj₁ (δ p) 
+      ≡⟨ Eq.cong (λ x → inj₁ x) δ-id ⟩ 
+    inj₁ p ∎
 
---   S''-rule : ∀ (p q t : xCL * ⊥) → S'' p q ⁎ t -[]> (p ⁎ t) ⁎ (q ⁎ t)
---   S''-rule p q t = begin 
---     γ (S'' p q ⁎ t) 
---       ≡⟨ γ-rec (appℕ , S'' p q ∷ t ∷ []) ⟩ 
---     inj₁ (δ p ⁎ t ⁎ (δ q ⁎ t)) 
---       ≡⟨ Eq.cong₂ (λ x y → inj₁ (x ⁎ t ⁎ (y ⁎ t))) δ-id δ-id ⟩ 
---     inj₁ ((p ⁎ t) ⁎ (q ⁎ t)) ∎
+  S''-rule : ∀ (p q t : xCL * ⊥) → S'' p q ⁎ t -[]> (p ⁎ t) ⁎ (q ⁎ t)
+  S''-rule p q t = begin 
+    γ (S'' p q ⁎ t) 
+      ≡⟨ γ-rec (appℕ , S'' p q ∷ t ∷ []) ⟩ 
+    inj₁ (δ p ⁎ t ⁎ (δ q ⁎ t)) 
+      ≡⟨ Eq.cong₂ (λ x y → inj₁ (x ⁎ t ⁎ (y ⁎ t))) δ-id δ-id ⟩ 
+    inj₁ ((p ⁎ t) ⁎ (q ⁎ t)) ∎
 
---   app-rule : ∀ (p p' q : xCL * ⊥) → p -[]> p' → p ⁎ q -[]> p' ⁎ q
---   app-rule p p' q pq = begin 
---     γ (p ⁎ q) 
---       ≡⟨ γ-rec (appℕ , p ∷ q ∷ []) ⟩
---     B.F₁ (id , sig-lift ∇) (ρ (appℕ , (p , γ p) ∷ (q , γ q) ∷ []))
---       ≡⟨ Eq.cong (λ z → B.F₁ (id , sig-lift ∇) (ρ (appℕ , (p , z) ∷ (q , γ q) ∷ []))) pq ⟩ 
---     inj₁ (p' ⁎ q) ∎
+  app-rule : ∀ (p p' q : xCL * ⊥) → p -[]> p' → p ⁎ q -[]> p' ⁎ q
+  app-rule p p' q pq = begin 
+    γ (p ⁎ q) 
+      ≡⟨ γ-rec (appℕ , p ∷ q ∷ []) ⟩
+    B.F₁ (id , sig-lift ∇) (ρ (appℕ , (p , γ p) ∷ (q , γ q) ∷ []))
+      ≡⟨ Eq.cong (λ z → B.F₁ (id , sig-lift ∇) (ρ (appℕ , (p , z) ∷ (q , γ q) ∷ []))) pq ⟩ 
+    inj₁ (p' ⁎ q) ∎
   
--- {-========================================================
---   LABELLED TRANSITIONS / DERIVATION RULES
---   Here we show that γ actually implements the reduction
---   rules as defined in the paper.
---   ========================================================-}
+{-========================================================
+  LABELLED TRANSITIONS / DERIVATION RULES
+  Here we show that γ actually implements the reduction
+  rules as defined in the paper.
+  ========================================================-}
 
---   -- labelled transition
+  -- labelled transition
   _-[_]>_ : ∀ (p t q : xCL * ⊥) → Set o
   p -[ t ]> q with γ p
   ... | inj₁ _ = ⊥
@@ -263,100 +227,92 @@ module Example.Combinatory2 (o : Level) (ext : Extensionality o o) where
       ≡⟨ γ-rec (appℕ , p ∷ q ∷ []) ⟩ 
     B.F₁ ((λ x → x) , sig-lift ∇) (ρ (appℕ , (p , γ p) ∷ (q , γ q) ∷ [])) 
       ≡⟨ Eq.cong (λ z → B.F₁ ((λ x → x) , sig-lift ∇) (ρ (appℕ , (p , z) ∷ (q , γ q) ∷ []))) eq ⟩ 
-    inj₁ (f {! p !}) -- TODO should be q instead of p
-      ≡⟨ Eq.cong (λ x → inj₁ x) {! pqp'  !} ⟩ 
+    inj₁ (f q)
+      ≡⟨ Eq.cong (λ x → inj₁ x) pqp' ⟩ 
     inj₁ p' ∎
-  -- app-rule-labeled p p' q pqp' with inj₂ f ← γ p in eq = begin 
-  --   γ (p ⁎ q) 
-  --     ≡⟨ γ-rec (appℕ , p ∷ q ∷ []) ⟩ 
-  --   B.F₁ ((λ x → x) , sig-lift ∇) (ρ (appℕ , (p , γ p) ∷ (q , γ q) ∷ [])) 
-  --     ≡⟨ Eq.cong (λ z → B.F₁ ((λ x → x) , sig-lift ∇) (ρ (appℕ , (p , z) ∷ (q , γ q) ∷ []))) eq ⟩
-  --   inj₁ (f q) 
-  --     ≡⟨ Eq.cong (λ x → inj₁ x) pqp' ⟩ 
-  --   inj₁ p' ∎
 
--- {-========================================================
---   CASE STUDY: Working with k-step reduction
---   ========================================================-}
+{-========================================================
+  CASE STUDY: Working with k-step reduction
+  ========================================================-}
 
---   ----- I I -> I
---   double-I : I ⁎ I -[]> I
---   double-I = I-rule I
---   -----
+  ----- I I -> I
+  double-I : I ⁎ I -[]> I
+  double-I = I-rule I
+  -----
 
---   ----- KIS -2-> I
---   kis-I : [ 2 ] K ⁎ I ⁎ S -[]>k I
---   kis-I = step-[]> (app-rule (K ⁎ I) (K' I) S (K-rule I)) 
---           (step-[]> (K'-rule I S) 
---           base-[]>)
---   -----
+  ----- KIS -2-> I
+  kis-I : [ 2 ] K ⁎ I ⁎ S -[]>k I
+  kis-I = step-[]> (app-rule (K ⁎ I) (K' I) S (K-rule I)) 
+          (step-[]> (K'-rule I S) 
+          base-[]>)
+  -----
 
---   ----- ((SK)I)((KI)S) -7-> I
---   skikis-I : [ 7 ] S ⁎ K ⁎ I ⁎ (K ⁎ I ⁎ S) -[]>k I
---   skikis-I = step-[]> (app-rule (S ⁎ K ⁎ I) (S' K ⁎ I) (K ⁎ I ⁎ S) (app-rule (S ⁎ K) (S' K) I (S-rule K))) 
---             (step-[]> (app-rule (S' K ⁎ I) (S'' K I) (K ⁎ I ⁎ S) (S'-rule K I)) 
---             (step-[]> (S''-rule K I (K ⁎ I ⁎ S)) 
---             (step-[]> (app-rule (K ⁎ (K ⁎ I ⁎ S)) (K' (K ⁎ I ⁎ S)) (I ⁎ (K ⁎ I ⁎ S)) (K-rule (K ⁎ I ⁎ S))) 
---             (step-[]> (K'-rule (K ⁎ I ⁎ S) (I ⁎ (K ⁎ I ⁎ S))) 
---             kis-I))))
---   -----
+  ----- ((SK)I)((KI)S) -7-> I
+  skikis-I : [ 7 ] S ⁎ K ⁎ I ⁎ (K ⁎ I ⁎ S) -[]>k I
+  skikis-I = step-[]> (app-rule (S ⁎ K ⁎ I) (S' K ⁎ I) (K ⁎ I ⁎ S) (app-rule (S ⁎ K) (S' K) I (S-rule K))) 
+            (step-[]> (app-rule (S' K ⁎ I) (S'' K I) (K ⁎ I ⁎ S) (S'-rule K I)) 
+            (step-[]> (S''-rule K I (K ⁎ I ⁎ S)) 
+            (step-[]> (app-rule (K ⁎ (K ⁎ I ⁎ S)) (K' (K ⁎ I ⁎ S)) (I ⁎ (K ⁎ I ⁎ S)) (K-rule (K ⁎ I ⁎ S))) 
+            (step-[]> (K'-rule (K ⁎ I ⁎ S) (I ⁎ (K ⁎ I ⁎ S))) 
+            kis-I))))
+  -----
 
---   --- EXAMPLE 3.2
---   ----- SKI -> S'(K)I
---   skis'ki : ((S ⁎ K) ⁎ I) -[]> (S' K ⁎ I) 
---   skis'ki = app-rule (S ⁎ K) (S' K) I (S-rule K)
---   -----
+  --- EXAMPLE 3.2
+  ----- SKI -> S'(K)I
+  skis'ki : ((S ⁎ K) ⁎ I) -[]> (S' K ⁎ I) 
+  skis'ki = app-rule (S ⁎ K) (S' K) I (S-rule K)
+  -----
 
---   ----- S'(K)I -> S''(K,I)
---   s'kis''ki : (S' (K) ⁎ I) -[]> S'' (K) (I)
---   s'kis''ki = S'-rule K I
---   -----
+  ----- S'(K)I -> S''(K,I)
+  s'kis''ki : (S' (K) ⁎ I) -[]> S'' (K) (I)
+  s'kis''ki = S'-rule K I
+  -----
 
---   ----- SKK -> S'(K)K
---   skks'kk : ((S ⁎ K) ⁎ K) -[]> (S' K ⁎ K)
---   skks'kk = app-rule (S ⁎ K) (S' K) K (S-rule K)
---   -----
+  ----- SKK -> S'(K)K
+  skks'kk : ((S ⁎ K) ⁎ K) -[]> (S' K ⁎ K)
+  skks'kk = app-rule (S ⁎ K) (S' K) K (S-rule K)
+  -----
 
---   ----- S'(K)K -> S''(K,K)
---   s'kks''kk : (S' (K) ⁎ K) -[]> S'' (K) (K)
---   s'kks''kk = S'-rule K K
---   -----
---   ---
+  ----- S'(K)K -> S''(K,K)
+  s'kks''kk : (S' (K) ⁎ K) -[]> S'' (K) (K)
+  s'kks''kk = S'-rule K K
+  -----
+  ---
 
---   --- Ωk ->* Ωk+1
---   preI : ℕ → xCL * ⊥ → xCL * ⊥
---   preI ℕ.zero t = t
---   preI (ℕ.suc n) t = I ⁎ (preI n t)
+  --- Ωk ->* Ωk+1
+  preI : ℕ → xCL * ⊥ → xCL * ⊥
+  preI ℕ.zero t = t
+  preI (ℕ.suc n) t = I ⁎ (preI n t)
 
---   ωk : ℕ → xCL * ⊥
---   ωk n = preI n (S ⁎ I ⁎ I)
---   Ωk : ℕ → xCL * ⊥
---   Ωk n = ωk n ⁎ ωk n
+  ωk : ℕ → xCL * ⊥
+  ωk n = preI n (S ⁎ I ⁎ I)
+  Ωk : ℕ → xCL * ⊥
+  Ωk n = ωk n ⁎ ωk n
 
---   preI-kstep : ∀ (k : ℕ) (t : xCL * ⊥) → [ k ] preI k t -[]>k t
---   preI-kstep ℕ.zero t = base-[]>
---   preI-kstep (ℕ.suc k) t = step-[]> (I-rule (preI k t)) (preI-kstep k t)
+  preI-kstep : ∀ (k : ℕ) (t : xCL * ⊥) → [ k ] preI k t -[]>k t
+  preI-kstep ℕ.zero t = base-[]>
+  preI-kstep (ℕ.suc k) t = step-[]> (I-rule (preI k t)) (preI-kstep k t)
 
---   preI-kstep2 : ∀ (k : ℕ) (t s : xCL * ⊥) → [ k ] ((preI k t) ⁎ s) -[]>k (t ⁎ s)
---   preI-kstep2 ℕ.zero t s = base-[]>
---   preI-kstep2 (ℕ.suc k) t s = step-[]> (Eq.cong₂
---      (λ x y →
---         inj₁ (App appℕ (x ∷ y ∷ [])))
---      (inj₁-injective (I-rule (preI k t))) (inj₁-injective (I-rule s))) (preI-kstep2 k t s) 
+  preI-kstep2 : ∀ (k : ℕ) (t s : xCL * ⊥) → [ k ] ((preI k t) ⁎ s) -[]>k (t ⁎ s)
+  preI-kstep2 ℕ.zero t s = base-[]>
+  preI-kstep2 (ℕ.suc k) t s = step-[]> (Eq.cong₂
+     (λ x y →
+        inj₁ (App appℕ (x ∷ y ∷ [])))
+     (inj₁-injective (I-rule (preI k t))) (inj₁-injective (I-rule s))) (preI-kstep2 k t s) 
 
---   Ωk-kstep : ∀ (k : ℕ) → [ k ] Ωk k -[]>k S ⁎ I ⁎ I ⁎ ωk k
---   Ωk-kstep k = preI-kstep2 k (S ⁎ I ⁎ I) (ωk k)
+  Ωk-kstep : ∀ (k : ℕ) → [ k ] Ωk k -[]>k S ⁎ I ⁎ I ⁎ ωk k
+  Ωk-kstep k = preI-kstep2 k (S ⁎ I ⁎ I) (ωk k)
 
---   -- Ωk -k+3-> Ωk+1
---   -- more explicitly the proof goes as follows:
---   -- Ωk ->ᵏ S ⁎ I ⁎ I ⁎ ωk -> S' I ⁎ I ⁎ ωk -> S'' I I ⁎ ωk k -> Ωk+1
---   Ωk-Ωk+1 : ∀ (k : ℕ) → [ ℕ.suc (ℕ.suc (ℕ.suc k)) ] Ωk k -[]>k Ωk (ℕ.suc k)
---   Ωk-Ωk+1 k = -[]>k-trans' {n = k} {m = 3} (Ωk-kstep k) (step-[]> step₁ (step-[]> step₂ (step-[]> step₃ base-[]>)))
---     where
---       step₁ : S ⁎ I ⁎ I ⁎ ωk k -[]> S' I ⁎ I ⁎ ωk k
---       step₂ : S' I ⁎ I ⁎ ωk k -[]> S'' I I ⁎ ωk k
---       step₃ : S'' I I ⁎ ωk k -[]> Ωk (ℕ.suc k)
---       step₁ = Eq.cong (λ x → inj₁ (S' I ⁎ I ⁎ x)) (inj₁-injective (I-rule (ωk k))) 
---       step₂ = Eq.cong (λ x → inj₁ (S'' I I ⁎ x)) (inj₁-injective (I-rule (ωk k)))
---       step₃ = Eq.cong₂ (λ x y → inj₁ ((I ⁎ x) ⁎ (I ⁎ y))) (inj₁-injective (I-rule (ωk k))) (inj₁-injective (I-rule (ωk k)))
---   ---
+  -- Ωk -k+3-> Ωk+1
+  -- more explicitly the proof goes as follows:
+  -- Ωk ->ᵏ S ⁎ I ⁎ I ⁎ ωk -> S' I ⁎ I ⁎ ωk -> S'' I I ⁎ ωk k -> Ωk+1
+  Ωk-Ωk+1 : ∀ (k : ℕ) → [ ℕ.suc (ℕ.suc (ℕ.suc k)) ] Ωk k -[]>k Ωk (ℕ.suc k)
+  Ωk-Ωk+1 k = -[]>k-trans' {n = k} {m = 3} (Ωk-kstep k) (step-[]> step₁ (step-[]> step₂ (step-[]> step₃ base-[]>)))
+    where
+      step₁ : S ⁎ I ⁎ I ⁎ ωk k -[]> S' I ⁎ I ⁎ ωk k
+      step₂ : S' I ⁎ I ⁎ ωk k -[]> S'' I I ⁎ ωk k
+      step₃ : S'' I I ⁎ ωk k -[]> Ωk (ℕ.suc k)
+      step₁ = Eq.cong (λ x → inj₁ (S' I ⁎ I ⁎ x)) (inj₁-injective (I-rule (ωk k))) 
+      step₂ = Eq.cong (λ x → inj₁ (S'' I I ⁎ x)) (inj₁-injective (I-rule (ωk k)))
+      step₃ = Eq.cong₂ (λ x y → inj₁ ((I ⁎ x) ⁎ (I ⁎ y))) (inj₁-injective (I-rule (ωk k))) (inj₁-injective (I-rule (ωk k)))
+  ---
