@@ -5,12 +5,13 @@ open import Level hiding (Lift)
 open import Data.Fin.Base
 open import Data.Fin.Subset using (Subset; Side; inside; outside; _∈_)
 open import Data.Vec as V using (Vec ; foldr ; [] ; _∷_ ; updateAt; removeAt) renaming (lookup to _!!_)
-open import Data.Vec.Properties using (lookup-map)
+open import Data.Vec.Properties using (lookup-map; map-∘)
 open import Data.Vec.Membership.Propositional hiding (_∈_)
 open import Data.Product using (_,_; _×_; Σ-syntax) renaming (Σ to Sigma)
 open import Data.Product.Base using (proj₁; proj₂) renaming (_×_ to _×⁰_)
 open import Data.Sum renaming (_⊎_ to _+⁰_)
 open import Data.Unit.Polymorphic using (tt; ⊤)
+open import Data.Nat.Base using (ℕ) renaming (zero to ℕ-zero; suc to ℕ-suc)
 open import Axiom.Extensionality.Propositional using (Extensionality)
 
 open import Categories.Category.Core
@@ -83,6 +84,11 @@ module HO-Specification (o : Level) (ext : Extensionality o o) where
     makeW (_ , inj₁ _) = inside
     makeW (_ , inj₂ _) = outside 
 
+    makeW-helper : ∀ {X} {Y} {Y'} (g : Y → Y') (n : ℕ) (args : Vec (Sigma X (λ x → Y +⁰ (X → Y))) n) → V.map makeW (V.map (λ x → proj₁ x , B.F₁ ((λ x₁ → x₁) , g) (proj₂ x)) args) ≡ V.map makeW args
+    makeW-helper g ℕ-zero [] = ≡-refl
+    makeW-helper g (ℕ-suc n) ((_ , inj₁ x₁) ∷ args) = Eq.cong (λ r → inside ∷ r) (makeW-helper g n args)
+    makeW-helper g (ℕ-suc n) ((_ , inj₂ y) ∷ args) = Eq.cong (λ r → outside ∷ r) (makeW-helper g n args) 
+
     -- W unlabeled
     Spec⇒ρ : HO-specification → Law
     Spec⇒ρ spec .ρ X Y (f , args) with rules spec f (V.map makeW args)
@@ -112,14 +118,17 @@ module HO-Specification (o : Level) (ext : Extensionality o o) where
       ... | _ , inj₁ _ | _ | ≡-refl | ()
       ... | _ , inj₂ g | _ | _ | _ = inj₂ (g x)
 
-    Spec⇒ρ spec .natural {X} {Y} {Y'} g (f , args) with rules spec f (V.map makeW args) in eq₁ | rules spec f (V.map makeW (V.map (λ x → proj₁ x , B.F₁ ((λ x₁ → x₁) , g) (proj₂ x)) args)) in eq₂
-    ... | progressing-rule t | progressing-rule s = Eq.cong (λ r → inj₁ r) (*-map-uniq Σ _ _ helper {!    !} s)
-      where
-      helper : (v : Level.Lift o (HO-reducing f (V.map makeW (V.map (λ x₁ → proj₁ x₁ , B.F₁ ((λ x₂ → x₂) , g) (proj₂ x₁)) args)))) → _ ≡ _
-      helper (Level.lift (var-orig x)) = {!   !}
-      helper (Level.lift (var-next x)) = {!   !}
-      helper (Level.lift (var-app x x₁)) = {!   !}
-    ... | progressing-rule t | non-progressing-rule x = {!   !} -- TODO eq₁ and eq₂ should be contradictory?
-    ... | non-progressing-rule t | progressing-rule x = {!   !} -- TODO eq₁ and eq₂ should be contradictory?
-    ... | non-progressing-rule t | non-progressing-rule x = {!   !}
+      -- (V → W) → Σ * V → Σ * W
+    -- makeW-helper {X} {Y} {Y'} g (arts Σ !! f) args
+
+    Spec⇒ρ spec .natural {X} {Y} {Y'} g (f , args) with rules spec f (V.map makeW args) in eq₁ | rules spec f (V.map makeW (V.map (λ x → proj₁ x , B.F₁ ((λ x₁ → x₁) , g) (proj₂ x)) args)) in eq₂ | makeW-helper {X} {Y} {Y'} g (arts Σ !! f) args
+    ... | progressing-rule t | progressing-rule s | e = Eq.cong (λ r → inj₁ r) {!   !} -- (*-map-uniq Σ _ _ helper {!     !} s)
+      -- where
+      -- helper : (v : Level.Lift o (HO-reducing f (V.map makeW (V.map (λ x₁ → proj₁ x₁ , B.F₁ ((λ x₂ → x₂) , g) (proj₂ x₁)) args)))) → _ ≡ _
+      -- helper (Level.lift (var-orig x)) = {!   !}
+      -- helper (Level.lift (var-next x)) = {!   !}
+      -- helper (Level.lift (var-app x x₁)) = {!   !}
+    ... | progressing-rule t | non-progressing-rule x | e = {!   !} -- TODO eq₁ and eq₂ should be contradictory?
+    ... | non-progressing-rule t | progressing-rule x | e = {!   !} -- TODO eq₁ and eq₂ should be contradictory?
+    ... | non-progressing-rule t | non-progressing-rule x | e = {! e  !}
     Spec⇒ρ spec .dinatural = {!   !}
