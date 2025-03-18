@@ -9,7 +9,7 @@ open import Data.Vec.Properties using (lookup-map; map-∘)
 open import Data.Vec.Membership.Propositional hiding (_∈_)
 open import Data.Product using (_,_; _×_; Σ-syntax) renaming (Σ to Sigma)
 open import Data.Product.Base using (proj₁; proj₂) renaming (_×_ to _×⁰_)
-open import Data.Sum renaming (_⊎_ to _+⁰_)
+open import Data.Sum renaming (_⊎_ to _+⁰_; map to _+¹_)
 open import Data.Unit.Polymorphic using (tt; ⊤)
 open import Data.Nat.Base using (ℕ) renaming (zero to ℕ-zero; suc to ℕ-suc)
 open import Axiom.Extensionality.Propositional using (Extensionality)
@@ -24,9 +24,10 @@ open import Categories.Functor.Algebra
 open import Categories.Category.Construction.F-Algebras
 open import Categories.FreeObjects.Free
 
+open import Relation.Binary.PropositionalEquality.Properties using (dcong)
 
 import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_) renaming (refl to ≡-refl; sym to ≡-sym; trans to ≡-trans)
+open Eq using (_≡_; subst) renaming (refl to ≡-refl; sym to ≡-sym; trans to ≡-trans)
 open Eq.≡-Reasoning
 
 module HO-Specification (o : Level) (ext : Extensionality o o) where
@@ -84,45 +85,78 @@ module HO-Specification (o : Level) (ext : Extensionality o o) where
     makeW (_ , inj₁ _) = inside
     makeW (_ , inj₂ _) = outside 
 
-    makeW-helper : ∀ {X} {Y} {Y'} (g : Y → Y') (n : ℕ) (args : Vec (Sigma X (λ x → Y +⁰ (X → Y))) n) → V.map makeW (V.map (λ x → proj₁ x , B.F₁ ((λ x₁ → x₁) , g) (proj₂ x)) args) ≡ V.map makeW args
+    makeW-helper : ∀ {X} {Y} {Y'} (g : Y → Y') (n : ℕ) (args : Vec (Sigma X (λ _ → Y +⁰ (X → Y))) n) → V.map makeW (V.map (λ x → proj₁ x , B.F₁ ((λ x → x) , g) (proj₂ x)) args) ≡ V.map makeW args
     makeW-helper g ℕ-zero [] = ≡-refl
     makeW-helper g (ℕ-suc n) ((_ , inj₁ x₁) ∷ args) = Eq.cong (λ r → inside ∷ r) (makeW-helper g n args)
     makeW-helper g (ℕ-suc n) ((_ , inj₂ y) ∷ args) = Eq.cong (λ r → outside ∷ r) (makeW-helper g n args) 
 
+    prule→target : ∀ {X} {Y} (f : Fin (ops Σ)) (args : Vec (Sigma X (λ _ → Y +⁰ (X → Y))) (arts Σ !! f)) → (W : Vec Side (V.length args)) → (W ≡ V.map makeW args) → Level.Lift o (HO-reducing f W) → X +⁰ Y
+    prule→target f args .(V.map makeW args) ≡-refl (Level.lift (var-orig i)) = inj₁ (proj₁ (args !! i))
+    prule→target f args .(V.map makeW args) ≡-refl (Level.lift (var-next (i , i∈W))) with args !! i | V.map makeW args !! i | i∈W | lookup-map i makeW args
+    ... | _ , inj₁ y | _ | _ | _ = inj₂ y
+    ... | _ , inj₂ _ | _ | () | ≡-refl 
+
+    prule→target f args .(V.map makeW args) ≡-refl (Level.lift (var-app v (i , i∈W))) with args !! i | V.map makeW args !! i | i∈W | lookup-map i makeW args | args !! v
+    ... | _ , inj₁ _ | _ | ≡-refl | () | _
+    ... | _ , inj₂ g | _ | _ | _ | y , _ = inj₂ (g y)
+
+
+    prule→target-cong : ∀ {X} {Y} {Y'} (g : Y → Y') (f : Fin (ops Σ))
+      → (args : Vec (Sigma X (λ _ → Y +⁰ (X → Y))) (arts Σ !! f))
+      → (args' : Vec (Sigma X (λ _ → Y' +⁰ (X → Y'))) (arts Σ !! f))
+      → args' ≡ V.map (λ x → proj₁ x , B.F₁ ((λ x → x) , g) (proj₂ x)) args
+      → (W : Vec Side (V.length args))
+      → (eq :  W ≡ V.map makeW args)
+      → (eq' : W ≡ V.map makeW args')
+      → (rule : Level.Lift o (HO-reducing f W))
+      → ((λ x → x) +¹ λ y → g y) (prule→target f args W eq rule) ≡ prule→target f args' W eq' rule 
+
+    prule→target-cong g f args args' ≡-refl W ≡-refl eq'' (Level.lift (var-orig x)) = {!!}
+    prule→target-cong g f args args' ≡-refl W ≡-refl eq'' (Level.lift (var-next x)) = {!!}
+    prule→target-cong g f args args' ≡-refl W ≡-refl eq'' (Level.lift (var-app x x₁)) = {!!}
+
+{-
+    prule→target-cong g f args args' eq W eq' (Level.lift (var-orig i)) (Level.lift (var-orig j)) rewrite eq | lookup-map j (λ x → proj₁ x , B.F₁ ((λ x₁ → x₁) , g) (proj₂ x)) args = {!!}
+    prule→target-cong g f args args' eq W eq' (Level.lift (var-orig x)) (Level.lift (var-next x₁)) = {!!}
+    prule→target-cong g f args args' eq W eq' (Level.lift (var-orig x)) (Level.lift (var-app x₁ x₂)) = {!!}
+    prule→target-cong g f args args' eq W eq' (Level.lift (var-next x)) rule' = {!!}
+    prule→target-cong g f args args' eq W eq' (Level.lift (var-app x x₁)) rule' = {!!}
+-}
     -- W unlabeled
     Spec⇒ρ : HO-specification → Law
     Spec⇒ρ spec .ρ X Y (f , args) with rules spec f (V.map makeW args)
-    ...  | progressing-rule t = inj₁ (*-map Σ helper t)
+    ...  | progressing-rule t = inj₁ (*-map Σ (prule→target f args (V.map makeW args) ≡-refl) t)
+        
+    ...  | non-progressing-rule t = inj₂ λ x → (*-map Σ (nprule→target x) t)
       where
-      helper : Level.Lift o (HO-reducing f _) → X +⁰ Y
-      helper (Level.lift (var-orig i)) = inj₁ (proj₁ (args !! i))
-      helper (Level.lift (var-next (i , i∈W))) with args !! i | V.map makeW args !! i | i∈W | lookup-map i makeW args 
-      ... | _ , inj₁ y | _ | _ | _ = inj₂ y
-      ... | _ , inj₂ _ | _ | ≡-refl | () 
-
-      helper (Level.lift (var-app v (i , i∈W))) with args !! i | V.map makeW args !! i | i∈W | lookup-map i makeW args | args !! v
-      ... | _ , inj₁ _ | _ | ≡-refl | () | _
-      ... | _ , inj₂ g | _ | _ | _ | y , _ = inj₂ (g y)
-    ...  | non-progressing-rule t = inj₂ λ x → (*-map Σ (helper x) t)
-      where
-      helper : X → Level.Lift o (HO-evaluating f _) → X +⁰ Y
-      helper _ (Level.lift (var-n-orig i)) = inj₁ (proj₁ (args !! i))
-      helper x (Level.lift var-arg) = inj₁ x
-      helper _ (Level.lift (var-n-next (i , i∈W))) with args !! i | V.map makeW args !! i | i∈W | lookup-map i makeW args
-      ... | _ , inj₁ y | _ | _ | _ = inj₂ y
-      ... | _ , inj₂ _ | _ | ≡-refl | ()
-      helper x (Level.lift (var-n-app (inj₁ v) (i , i∈W))) with args !! i | V.map makeW args !! i | i∈W | lookup-map i makeW args | args !! v
-      ... | _ , inj₁ _ | _ | ≡-refl | () | _
-      ... | _ , inj₂ g | _ | _ | _ | y , _ = inj₂ (g y)
-      helper x (Level.lift (var-n-app (inj₂ tt) (i , i∈W))) with args !! i | V.map makeW args !! i | i∈W | lookup-map i makeW args
-      ... | _ , inj₁ _ | _ | ≡-refl | ()
-      ... | _ , inj₂ g | _ | _ | _ = inj₂ (g x)
+        nprule→target : X → Level.Lift o (HO-evaluating f _) → X +⁰ Y
+        nprule→target _ (Level.lift (var-n-orig i)) = inj₁ (proj₁ (args !! i))
+        nprule→target x (Level.lift var-arg) = inj₁ x
+        nprule→target _ (Level.lift (var-n-next (i , i∈W))) with args !! i | V.map makeW args !! i | i∈W | lookup-map i makeW args
+        ... | _ , inj₁ y | _ | _ | _ = inj₂ y
+        ... | _ , inj₂ _ | _ | ≡-refl | ()
+        nprule→target x (Level.lift (var-n-app (inj₁ v) (i , i∈W))) with args !! i | V.map makeW args !! i | i∈W | lookup-map i makeW args | args !! v
+        ... | _ , inj₁ _ | _ | ≡-refl | () | _
+        ... | _ , inj₂ g | _ | _ | _ | y , _ = inj₂ (g y)
+        nprule→target x (Level.lift (var-n-app (inj₂ tt) (i , i∈W))) with args !! i | V.map makeW args !! i | i∈W | lookup-map i makeW args
+        ... | _ , inj₁ _ | _ | ≡-refl | ()
+        ... | _ , inj₂ g | _ | _ | _ = inj₂ (g x)
 
       -- (V → W) → Σ * V → Σ * W
     -- makeW-helper {X} {Y} {Y'} g (arts Σ !! f) args
 
-    Spec⇒ρ spec .natural {X} {Y} {Y'} g (f , args) with rules spec f (V.map makeW args) in eq₁ | rules spec f (V.map makeW (V.map (λ x → proj₁ x , B.F₁ ((λ x₁ → x₁) , g) (proj₂ x)) args)) in eq₂ | makeW-helper {X} {Y} {Y'} g (arts Σ !! f) args
-    ... | progressing-rule t | progressing-rule s | e = Eq.cong (λ r → inj₁ r) {!   !} -- (*-map-uniq Σ _ _ helper {!     !} s)
+--    Spec⇒ρ spec .natural {X} {Y} {Y'} g (f , args) = {!rules!}
+
+    Spec⇒ρ spec .natural {X} {Y} {Y'} g (f , args) with rules spec f (V.map makeW args) in eq₁
+                                                      | rules spec f (V.map makeW (V.map (λ x → proj₁ x , B.F₁ ((λ x₁ → x₁) , g) (proj₂ x)) args)) in eq₂
+                                                      | makeW-helper {X} {Y} {Y'} g (arts Σ !! f) args -- (rules spec f) (makeW-helper {X} {Y} {Y'} g (arts Σ !! f) args) --  {!rules spec f!} ()
+    ... | progressing-rule t | progressing-rule s | e = Eq.cong (λ r → inj₁ r) {!!}
+    {- begin 
+            {!Lift.lift Σ (X +⁰ Y) (Σ-Algebra (X +⁰ Y') Σ) (λ x → Var ([ inj₁ , (λ x₁ → inj₂ (g x₁)) ] x)) (*-map Σ (HO-Specification.helper spec X Y f args t) t)!} 
+              ≡⟨ {!!} ⟩ 
+            {!!} 
+              ≡⟨ {!!} ⟩ 
+            {! *-map Σ (HO-Specification.helper spec X Y' f (V.map (λ x → proj₁ x , B.F₁ ((λ x₁ → x₁) , g) (proj₂ x)) args) s) s!} ∎) -}
       -- where
       -- helper : (v : Level.Lift o (HO-reducing f (V.map makeW (V.map (λ x₁ → proj₁ x₁ , B.F₁ ((λ x₂ → x₂) , g) (proj₂ x₁)) args)))) → _ ≡ _
       -- helper (Level.lift (var-orig x)) = {!   !}
