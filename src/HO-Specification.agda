@@ -93,12 +93,17 @@ module HO-Specification (o : Level) (ext : Extensionality o o) where
 
     prule→target : ∀ {X} {Y} (f : Fin (ops Σ)) (args : Vec (Sigma X (λ _ → Y +⁰ (X → Y))) (arts Σ !! f)) → (W : Vec Side (V.length args)) → (W ≡ V.map makeW args)
       → HO-reducing {ℓ = o} f W → X +⁰ Y
+
+    -- Original variables
     prule→target f args .(V.map makeW args) ≡-refl (var-orig i) = inj₁ (proj₁ (args !! i))
+
+    -- New variables via unlabelled transitions
     prule→target f args .(V.map makeW args) ≡-refl (var-next (i , i∈W)) with args !! i | V.map makeW args !! i | i∈W | lookup-map i makeW args
     ... | _ , inj₁ y | _ | _ | _ = inj₂ y
     ... | _ , inj₂ _ | _ | () | ≡-refl 
 
-    prule→target f args .(V.map makeW args) ≡-refl ((var-app v (i , i∈W))) with args !! i | V.map makeW args !! i | i∈W | lookup-map i makeW args | args !! v
+    -- New variables via labelled transitions
+    prule→target f args .(V.map makeW args) ≡-refl (var-app v (i , i∈W)) with args !! i | V.map makeW args !! i | i∈W | lookup-map i makeW args | args !! v
     ... | _ , inj₁ _ | _ | ≡-refl | () | _
     ... | _ , inj₂ g | _ | _ | _ | y , _ = inj₂ (g y)
 
@@ -120,8 +125,16 @@ module HO-Specification (o : Level) (ext : Extensionality o o) where
 
         prule→target-cong-vo₂ : (eq : W ≡ V.map makeW args') → inj₁ (proj₁ (args !! i)) ≡ prule→target f args' W eq (var-orig i)  
         prule→target-cong-vo₂ ≡-refl rewrite lookup-map i (λ x → proj₁ x , B.F₁ (id , g) (proj₂ x)) args = ≡-refl
-        
-    prule→target-cong g f args args' ≡-refl W ≡-refl eq' (var-next (i , i∈W)) = {!   !}
+
+    prule→target-cong g f args .(V.map (λ x → proj₁ x , B.F₁ (id , g) (proj₂ x)) args) ≡-refl W eq eq' (var-next (i , i∈W)) = {!!}
+    
+      where
+        prule→target-cong-vn₁ : (eq : W ≡ V.map makeW args) → (id +¹ g) (prule→target f args W eq (var-next (i , i∈W))) ≡ {!!}
+        prule→target-cong-vn₁ ≡-refl = {!!}
+
+        prule→target-cong-vn₂ : (eq : W ≡ V.map makeW (V.map (λ x → proj₁ x , B.F₁ (id , g) (proj₂ x)) args)) → {!!} ≡ prule→target f (V.map (λ x → proj₁ x , B.F₁ (id , g) (proj₂ x)) args) W eq (var-next (i , i∈W)) 
+        prule→target-cong-vn₂ ≡-refl = {!!}
+
     prule→target-cong g f args args' ≡-refl .(V.map makeW args) ≡-refl eq' (var-app x x₁) = {!  !}
 
     -- W unlabeled
