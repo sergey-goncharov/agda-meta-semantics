@@ -2,6 +2,7 @@
 -- Theorem 3.7
 
 open import Level hiding (Lift)
+open import Function.Base
 open import Data.Fin.Base
 open import Data.Fin.Subset using (Subset; Side; inside; outside; _∈_)
 open import Data.Vec as V using (Vec ; foldr ; [] ; _∷_ ; updateAt; removeAt) renaming (lookup to _!!_)
@@ -14,7 +15,7 @@ open import Data.Unit.Polymorphic using (tt; ⊤)
 open import Data.Nat.Base using (ℕ) renaming (zero to ℕ-zero; suc to ℕ-suc)
 open import Axiom.Extensionality.Propositional using (Extensionality)
 
-open import Categories.Category.Core hiding (id)
+open import Categories.Category.Core
 open import Categories.Category.Instance.Sets renaming (Sets to Agda)
 open import Category.Instance.Properties.Sets.Cartesian using () renaming (Sets-Cartesian to Agda-Cartesian)
 open import Category.Instance.Properties.Sets.Cocartesian using () renaming (Sets-Cocartesian to Agda-Cocartesian)
@@ -32,7 +33,7 @@ open Eq.≡-Reasoning
 
 module HO-Specification (o : Level) (ext : Extensionality o o) where
   open import Example.Signature o
-  open Category renaming (op to _op) hiding (id)
+  open Category using () renaming (op to _op) hiding (id)
 
   module _ (Σ : Signature) where
     -- reducing rules
@@ -114,14 +115,14 @@ module HO-Specification (o : Level) (ext : Extensionality o o) where
 
     prule→target-cong g f args args' ≡-refl W eq eq' (var-orig i) = ≡-trans (prule→target-cong-vo₁ eq) (prule→target-cong-vo₂ eq')
       where
-        prule→target-cong-vo₁ : (eq :  W ≡ V.map makeW args) → (id +¹ g) (prule→target f args W eq (var-orig i)) ≡ inj₁ (proj₁ (args !! i))
+        prule→target-cong-vo₁ : (eq : W ≡ V.map makeW args) → (id +¹ g) (prule→target f args W eq (var-orig i)) ≡ inj₁ (proj₁ (args !! i))
         prule→target-cong-vo₁ ≡-refl = ≡-refl
 
         prule→target-cong-vo₂ : (eq : W ≡ V.map makeW args') → inj₁ (proj₁ (args !! i)) ≡ prule→target f args' W eq (var-orig i)  
         prule→target-cong-vo₂ ≡-refl rewrite lookup-map i (λ x → proj₁ x , B.F₁ (id , g) (proj₂ x)) args = ≡-refl
         
-    prule→target-cong g f args args' ≡-refl .(V.map makeW args) ≡-refl eq' (var-next (i , i∈W)) = {!!}
-    prule→target-cong g f args args' ≡-refl W eq eq' (var-app x x₁) = {!!}
+    prule→target-cong g f args args' ≡-refl W ≡-refl eq' (var-next (i , i∈W)) = {!   !}
+    prule→target-cong g f args args' ≡-refl .(V.map makeW args) ≡-refl eq' (var-app x x₁) = {!  !}
 
     -- W unlabeled
     Spec⇒ρ : HO-specification → Law
@@ -150,13 +151,16 @@ module HO-Specification (o : Level) (ext : Extensionality o o) where
 
     Spec⇒ρ spec .natural {X} {Y} {Y'} g (f , args) with rules spec f (V.map makeW args) in eq₁
                                                       | rules spec f (V.map makeW (V.map (λ x → proj₁ x , B.F₁ (id , g) (proj₂ x)) args)) in eq₂
-    ... | progressing-rule t | progressing-rule s = Eq.cong inj₁ {!!}
-    {- begin 
+    ... | progressing-rule t | progressing-rule s = Eq.cong inj₁ (begin 
             {!Lift.lift Σ (X +⁰ Y) (Σ-Algebra (X +⁰ Y') Σ) (λ x → Var ([ inj₁ , (λ x₁ → inj₂ (g x₁)) ] x)) (*-map Σ (HO-Specification.helper spec X Y f args t) t)!} 
-              ≡⟨ {!!} ⟩ 
-            {!!} 
-              ≡⟨ {!!} ⟩ 
-            {! *-map Σ (HO-Specification.helper spec X Y' f (V.map (λ x → proj₁ x , B.F₁ ((λ x₁ → x₁) , g) (proj₂ x)) args) s) s!} ∎) -}
+              ≡⟨ {! !} ⟩ 
+            {!   !}
+              ≡⟨ {!   !} ⟩ 
+            *-map Σ ((id +¹ g) ∘ prule→target f args (V.map makeW args) ≡-refl) t
+              ≡⟨ Eq.cong (λ r → *-map Σ r t) (ext (λ r → prule→target-cong g f args (V.map (λ x → proj₁ x , B.F₁ (id , g) (proj₂ x)) args) ≡-refl (V.map makeW args) ≡-refl (≡-sym (makeW-helper g (V.length args) args)) r)) ⟩ 
+            *-map Σ (prule→target f (V.map (λ x → proj₁ x , B.F₁ (id , g) (proj₂ x)) args) (V.map makeW args) (≡-sym (makeW-helper g (V.length args) args))) t
+              ≡⟨ {!   !} ⟩
+            {! *-map Σ (HO-Specification.helper spec X Y' f (V.map (λ x → proj₁ x , B.F₁ ((λ x₁ → x₁) , g) (proj₂ x)) args) s) s!} ∎)
       -- where
       -- helper : (v : Level.Lift o (HO-reducing f (V.map makeW (V.map (λ x₁ → proj₁ x₁ , B.F₁ ((λ x₂ → x₂) , g) (proj₂ x₁)) args)))) → _ ≡ _
       -- helper (Level.lift (var-orig x)) = {!   !}
@@ -164,5 +168,5 @@ module HO-Specification (o : Level) (ext : Extensionality o o) where
       -- helper (Level.lift (var-app x x₁)) = {!   !}
     ... | progressing-rule t | non-progressing-rule x = {!   !} -- TODO eq₁ and eq₂ should be contradictory?
     ... | non-progressing-rule t | progressing-rule x = {!   !} -- TODO eq₁ and eq₂ should be contradictory?
-    ... | non-progressing-rule t | non-progressing-rule x = {! e  !}
+    ... | non-progressing-rule t | non-progressing-rule x = {!   !}
     Spec⇒ρ spec .dinatural = {!   !}
