@@ -109,13 +109,13 @@ module HO-Specification (o : Level) (ext : Extensionality o o) where
 
 
     prule→target-cong : ∀ {X} {Y} {Y'} (g : Y → Y') (f : Fin (ops Σ))
-      → (args  : Vec (Sigma X (λ _ → Y +⁰ (X → Y))) (arts Σ !! f))
-      → (args' : Vec (Sigma X (λ _ → Y' +⁰ (X → Y'))) (arts Σ !! f))
+      → (args  : Vec (X × B.F₀ (X , Y))  (arts Σ !! f))
+      → (args' : Vec (X × B.F₀ (X , Y')) (arts Σ !! f))
       → args' ≡ V.map (λ x → proj₁ x , B.F₁ (id , g) (proj₂ x)) args
       → (W : Vec Side (V.length args))
       → (eq  : W ≡ V.map makeW args)
       → (eq' : W ≡ V.map makeW args')
-      → (rule :  (HO-reducing f W))
+      → (rule : HO-reducing f W)
       → (id +¹ g) (prule→target f args W eq rule) ≡ prule→target f args' W eq' rule 
 
     prule→target-cong g f args args' ≡-refl W eq eq' (var-orig i) = ≡-trans (prule→target-cong-vo₁ eq) (prule→target-cong-vo₂ eq')
@@ -130,7 +130,8 @@ module HO-Specification (o : Level) (ext : Extensionality o o) where
     
       where
         prule→target-cong-vn₁ : (eq : W ≡ V.map makeW args) → (id +¹ g) (prule→target f args W eq (var-next (i , i∈W))) ≡ {!!}
-        prule→target-cong-vn₁ ≡-refl = {!!}
+        prule→target-cong-vn₁ ≡-refl = {!!} -- with args !! i
+        -- ... | _ , inj₁ _ = {!!}
 
         prule→target-cong-vn₂ : (eq : W ≡ V.map makeW (V.map (λ x → proj₁ x , B.F₁ (id , g) (proj₂ x)) args)) → {!!} ≡ prule→target f (V.map (λ x → proj₁ x , B.F₁ (id , g) (proj₂ x)) args) W eq (var-next (i , i∈W)) 
         prule→target-cong-vn₂ ≡-refl = {!!}
@@ -165,7 +166,7 @@ module HO-Specification (o : Level) (ext : Extensionality o o) where
     Spec⇒ρ spec .natural {X} {Y} {Y'} g (f , args) with rules spec f (V.map makeW args) in eq₁
                                                       | rules spec f (V.map makeW (V.map (λ x → proj₁ x , B.F₁ (id , g) (proj₂ x)) args)) in eq₂
     ... | progressing-rule t | progressing-rule s = Eq.cong inj₁ (begin 
-            {!Lift.lift Σ (X +⁰ Y) (Σ-Algebra (X +⁰ Y') Σ) (λ x → Var ([ inj₁ , (λ x₁ → inj₂ (g x₁)) ] x)) (*-map Σ (HO-Specification.helper spec X Y f args t) t)!} 
+            Lift.lift Σ (X +⁰ Y) (Σ-Algebra (X +⁰ Y') Σ) (λ x → Var ([ inj₁ , (λ x₁ → inj₂ (g x₁)) ] x)) (*-map Σ (prule→target f args (V.map makeW args) ≡-refl) t) 
               ≡⟨ {! !} ⟩ 
             {!   !}
               ≡⟨ {!   !} ⟩ 
@@ -173,7 +174,14 @@ module HO-Specification (o : Level) (ext : Extensionality o o) where
               ≡⟨ Eq.cong (λ r → *-map Σ r t) (ext (λ r → prule→target-cong g f args (V.map (λ x → proj₁ x , B.F₁ (id , g) (proj₂ x)) args) ≡-refl (V.map makeW args) ≡-refl (≡-sym (makeW-helper g (V.length args) args)) r)) ⟩ 
             *-map Σ (prule→target f (V.map (λ x → proj₁ x , B.F₁ (id , g) (proj₂ x)) args) (V.map makeW args) (≡-sym (makeW-helper g (V.length args) args))) t
               ≡⟨ {!   !} ⟩
-            {! *-map Σ (HO-Specification.helper spec X Y' f (V.map (λ x → proj₁ x , B.F₁ ((λ x₁ → x₁) , g) (proj₂ x)) args) s) s!} ∎)
+            *-map Σ (prule→target f (V.map (λ x → proj₁ x , B.F₁ (id , g) (proj₂ x)) args) (V.map makeW (V.map (λ x → proj₁ x , B.F₁ (id , g) (proj₂ x)) args)) ≡-refl)
+             s
+              ≡⟨ Eq.cong
+                  (λ r → *-map Σ (prule→target f ((V.map (λ x → proj₁ x , B.F₁ (id , g) (proj₂ x)) args)) {!r!} ≡-refl) s
+                  )
+                  {!!} ⟩
+            *-map Σ (prule→target f (V.map (λ x → proj₁ x , B.F₁ (id , g) (proj₂ x)) args) (V.map makeW (V.map (λ x → proj₁ x , B.F₁ (id , g) (proj₂ x)) args)) ≡-refl) s
+            ∎)
       -- where
       -- helper : (v : Level.Lift o (HO-reducing f (V.map makeW (V.map (λ x₁ → proj₁ x₁ , B.F₁ ((λ x₂ → x₂) , g) (proj₂ x₁)) args)))) → _ ≡ _
       -- helper (Level.lift (var-orig x)) = {!   !}
